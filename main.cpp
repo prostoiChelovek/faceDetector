@@ -42,11 +42,13 @@ int main(int argc, const char **argv) {
     if (!recognizer.readNet(caffeConfigFile, caffeWeightFile))
         return EXIT_FAILURE;
     if (!recognizer.readRecognitionModel(modelFile))
-        return EXIT_FAILURE;
+        cerr << "Could not open recognition model " << modelFile << endl;
     if (!recognizer.readLabels(labelsFile))
         return EXIT_FAILURE;
     if (!recognizer.readImageList(imgsList))
         return EXIT_FAILURE;
+
+    recognizer.confidenceThreshold = .8;
 
     Mat img, frame;
 

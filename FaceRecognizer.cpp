@@ -103,7 +103,11 @@ namespace FaceRecognizer {
 
 
     bool FaceRecognizer::readRecognitionModel(std::string file) {
-        model->read(file);
+        try {
+            model->read(file);
+        } catch (...) {
+            return false;
+        }
         if (model->empty()) {
             std::cerr << "Could not load face recognition model " << file << std::endl;
             return false;
