@@ -6,6 +6,8 @@
 
 namespace FaceRecognizer {
 
+    cv::Size faceSize = cv::Size(200, 240);
+
     bool getFileContent(std::string fileName, std::vector<std::string> &vecOfStrs) {
         std::ifstream in(fileName.c_str());
         if (!in) {
@@ -45,6 +47,28 @@ namespace FaceRecognizer {
         return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
     }
 
+    bool normalizeImages(const std::string &filename, char separator) {
+        std::ifstream file(filename.c_str(), std::ifstream::in);
+        if (!file) {
+            std::cerr << "No valid input file was given, please check the given filename." << std::endl;
+            return false;
+        }
+        std::string line, path;
+        while (getline(file, line)) {
+            std::stringstream liness(line);
+            getline(liness, path, separator);
+            if (path.empty())
+                continue;
+            cv::Mat img = cv::imread(path);
+            if (img.empty())
+                continue;
+            if (img.size() != faceSize)
+                cv::resize(img, img, faceSize);
+            cv::imwrite(path, img);
+        }
+        return true;
+    }
+
 
     Face::Face(cv::Point p1, cv::Point p2, int label) : label(label) {
         rect = cv::Rect(p1, p2);
@@ -79,8 +103,8 @@ namespace FaceRecognizer {
     Face *FaceRecognizer::getLastFace(Face &now) {
         int minDist = -1;
         Face *r = nullptr;
-        for (int i = 0; i < lastFaces.size(); i++) {
-            Face *l = &lastFaces[i];
+        for (auto &lastFace : lastFaces) {
+            Face *l = &lastFace;
             int dist = getDist(l->rect.tl(), now.rect.tl())
                        + getDist(l->rect.br(), now.rect.br());
             if (dist < minDist && dist <= 50 || minDist == -1) {
@@ -135,8 +159,8 @@ namespace FaceRecognizer {
         std::vector<cv::Mat> imgs;
         std::vector<int> lbls;
         read_csv(file, imgs, lbls);
-        for (int i = 0; i < lbls.size(); i++)
-            imgNum[lbls[i]]++;
+        for (int lbl : lbls)
+            imgNum[lbl]++;
 
         return true;
     }
@@ -171,8 +195,11 @@ namespace FaceRecognizer {
                 Face f;
                 f.rect = cv::Rect(pt1, pt2);
 
-                if (!model->empty())
-                    f.label = model->predict(gray(f.rect));
+                if (!model->empty()) {
+                    cv::Mat resized = gray.clone()(f.rect);
+                    cv::resize(resized, resized, faceSize, 1, 1);
+                    f.label = model->predict(resized);
+                }
 
                 f.last = getLastFace(f);
                 if (f.last != nullptr) {
@@ -204,6 +231,7 @@ namespace FaceRecognizer {
     std::string FaceRecognizer::addTrainImage(std::string imagesDir, cv::Mat &img) {
         std::string path = imagesDir + "/" + std::to_string(currentLabel)
                            + "_" + std::to_string(imgNum[currentLabel]) + ".png";
+        cv::resize(img, img, faceSize, 1, 1);
         cv::imwrite(path, img);
         imsListFs << path << ";" << currentLabel << std::endl;
         imgNum[currentLabel]++;
@@ -215,7 +243,7 @@ namespace FaceRecognizer {
         for (const Face &f : faces) {
             cv::rectangle(img, f.rect, color, 2, 4);
 
-            if (f.label != -1) {
+            if (f.label != -1 || !model->empty()) {
                 std::string label = f.label < labels.size() ? labels[f.label] : "";
                 putText(img, label, cv::Point(f.rect.x, f.rect.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.9,
                         color, 2);
@@ -234,6 +262,7 @@ namespace FaceRecognizer {
         if (imgs.empty() || labels.empty() || imgs.size() != labels.size())
             return false;
 
+        normalizeImages(imsList);
         model->train(imgs, labels);
         model->save(modelFile);
         return true;

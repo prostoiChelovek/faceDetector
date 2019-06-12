@@ -48,8 +48,21 @@ int main(int argc, const char **argv) {
     if (!recognizer.readImageList(imgsList))
         return EXIT_FAILURE;
 
-    recognizer.confidenceThreshold = .8;
 
+    namedWindow("Face Detection");
+    int detectTh = 95;
+    recognizer.confidenceThreshold = .95;
+    auto detectThCb = [](int pos, void *data) {
+        static_cast<FaceRecognizer::FaceRecognizer *>(data)->confidenceThreshold = float(pos) / 100;
+    };
+    createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &recognizer);
+    int recTh = 70;
+    recognizer.model->setThreshold(recTh);
+    auto recThCb = [](int pos, void *data) {
+        static_cast<FaceRecognizer::FaceRecognizer *>(data)->model->setThreshold(pos);
+    };
+    createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, &recognizer);
+    
     Mat img, frame;
 
     double tt_opencvDNN = 0;

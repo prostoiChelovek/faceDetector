@@ -19,10 +19,14 @@
 
 namespace FaceRecognizer {
 
+    extern cv::Size faceSize;
+
     bool getFileContent(std::string fileName, std::vector<std::string> &vecOfStrs);
 
     bool
     read_csv(const std::string &filename, std::vector<cv::Mat> &images, std::vector<int> &labels, char separator = ';');
+
+    bool normalizeImages(const std::string &filename, char separator = ';');
 
     double getDist(cv::Point a, cv::Point b);
 
@@ -55,6 +59,7 @@ namespace FaceRecognizer {
         cv::Ptr<cv::face::LBPHFaceRecognizer> model;
 
         std::vector<Face> faces;
+        std::vector<Face> lastFaces;
 
         int currentLabel = 0;
         std::vector<std::string> labels;
@@ -89,7 +94,6 @@ namespace FaceRecognizer {
     private:
         std::ofstream labelsFs;
         std::ofstream imsListFs;
-        std::vector<Face> lastFaces;
     };
 
 }
