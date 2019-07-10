@@ -91,10 +91,6 @@ namespace FaceRecognizer {
         model = cv::face::LBPHFaceRecognizer::create();
     }
 
-    FaceRecognizer::FaceRecognizer(cv::Size capSize) : capSize(std::move(capSize)) {
-        model = cv::face::LBPHFaceRecognizer::create();
-    }
-
     FaceRecognizer::~FaceRecognizer() {
         labelsFs.close();
         imsListFs.close();
@@ -117,7 +113,7 @@ namespace FaceRecognizer {
 
 
     bool FaceRecognizer::readNet(std::string caffeConfigFile, std::string caffeWeightFile) {
-        net = cv::dnn::readNetFromCaffe(caffeConfigFile, caffeWeightFile);
+        net = cv::dnn::readNet(caffeConfigFile, caffeWeightFile);
         if (net.empty()) {
             fprintf(stderr, "Could not load net (%s, %s)", caffeConfigFile.c_str(), caffeWeightFile.c_str());
             return false;
@@ -166,7 +162,7 @@ namespace FaceRecognizer {
     }
 
     bool FaceRecognizer::detectFaces(cv::Mat &img) {
-        cv::Mat inputBlob = cv::dnn::blobFromImage(img, inScaleFactor, capSize, meanVal,
+        cv::Mat inputBlob = cv::dnn::blobFromImage(img, inScaleFactor, inSize, meanVal,
                                                    false, false);
         net.setInput(inputBlob, "data");
         cv::Mat detection = net.forward("detection_out");
@@ -179,21 +175,31 @@ namespace FaceRecognizer {
             float confidence = detectionMat.at<float>(i, 2);
 
             if (confidence > confidenceThreshold) {
-                int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * capSize.width);
-                int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * capSize.height);
-                int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * capSize.width);
-                int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * capSize.height);
+                auto x1 = static_cast<int>(detectionMat.at<float>(i, 3) * img.cols);
+                auto y1 = static_cast<int>(detectionMat.at<float>(i, 4) * img.rows);
+                auto x2 = static_cast<int>(detectionMat.at<float>(i, 5) * img.cols);
+                auto y2 = static_cast<int>(detectionMat.at<float>(i, 6) * img.rows);
 
-                cv::Rect capRect = cv::Rect(0, 0, capSize.width, capSize.height);
-                cv::Point pt1(x1, y1), pt2(x2, y2);
-                if (!capRect.contains(pt1) || !capRect.contains(pt2))
+                Face f;
+                f.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+
+                if (f.rect.width <= 0 || f.rect.height <= 0)
                     continue;
+                if (f.rect.x < 0) f.rect.x = 0;
+                if (f.rect.y < 0) f.rect.y = 0;
+                if (f.rect.x >= img.cols)
+                    f.rect.x = img.cols - f.rect.width;
+                if (f.rect.y >= img.rows)
+                    f.rect.y = img.rows - f.rect.height;
+                if (f.rect.x + f.rect.width > img.cols)
+                    f.rect.width = img.cols - f.rect.x;
+                if (f.rect.y + f.rect.height > img.rows)
+                    f.rect.height = img.rows - f.rect.y;
 
                 cv::Mat gray;
                 cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-                Face f;
-                f.rect = cv::Rect(pt1, pt2);
+                f.confidence = confidence * 100;
 
                 if (!model->empty()) {
                     cv::Mat resized = gray.clone()(f.rect);
@@ -215,17 +221,12 @@ namespace FaceRecognizer {
     }
 
 
-    std::string FaceRecognizer::addLabel() {
-        std::cout << "Label: ";
-        std::string lbl;
-        std::getline(std::cin, lbl);
-        labels.emplace_back(lbl);
+    void FaceRecognizer::addLabel(std::string &label) {
+        labels.emplace_back(label);
         currentLabel = labels.size() - 1;
         imgNum[currentLabel] = 0;
-        labelsFs << lbl << "\n";
+        labelsFs << label << "\n";
         labelsFs.flush();
-
-        return lbl;
     }
 
     std::string FaceRecognizer::addTrainImage(std::string imagesDir, cv::Mat &img) {
@@ -248,6 +249,10 @@ namespace FaceRecognizer {
                 putText(img, label, cv::Point(f.rect.x, f.rect.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.9,
                         color, 2);
             }
+
+            putText(img, std::to_string(f.confidence), cv::Point(f.rect.x, f.rect.y - 50), cv::FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    color, 2);
 
             if (f.last != nullptr)
                 putText(img, f.getMovingDir(), cv::Point(f.rect.x, f.rect.y - 25), cv::FONT_HERSHEY_SIMPLEX, 0.9,

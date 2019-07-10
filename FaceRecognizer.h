@@ -34,6 +34,8 @@ namespace FaceRecognizer {
         cv::Rect rect;
         int label = -1;
 
+        int confidence = 0;
+
         cv::Point offset; // distance between current position and last
         Face *last = nullptr;
 
@@ -49,11 +51,10 @@ namespace FaceRecognizer {
 
     class FaceRecognizer {
     public:
+        cv::Size inSize = cv::Size(300, 300);
         double inScaleFactor = 1.0;
         float confidenceThreshold = 0.7;
         cv::Scalar meanVal = cv::Scalar(104.0, 177.0, 123.0);
-
-        cv::Size capSize;
 
         cv::dnn::Net net;
         cv::Ptr<cv::face::LBPHFaceRecognizer> model;
@@ -66,8 +67,6 @@ namespace FaceRecognizer {
         std::map<int, int> imgNum;
 
         FaceRecognizer();
-
-        explicit FaceRecognizer(cv::Size capSize);
 
         ~FaceRecognizer();
 
@@ -85,7 +84,7 @@ namespace FaceRecognizer {
 
         bool readImageList(std::string file);
 
-        std::string addLabel();
+        void addLabel(std::string &label);
 
         std::string addTrainImage(std::string imagesDir, cv::Mat &img);
 

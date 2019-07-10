@@ -10,23 +10,21 @@
 #include <opencv2/tracking.hpp>
 
 #include "FaceRecognizer.h"
+#include "utils.hpp"
 
 using namespace cv;
 using namespace std;
 using namespace cv::dnn;
 using namespace cv::face;
 
-Size capSize;
-
-const string caffeConfigFile = "../deploy.prototxt";
-const string caffeWeightFile = "../res10_300x300_ssd_iter_140000_fp16.caffemodel";
+const string configFile = "../models/deploy.prototxt";
+const string weightFile = "../models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
 
 string imgsDir = "../images";
 string imgsList = "../faces.csv";
 string labelsFile = "../labels.txt";
 
 string modelFile = "../model.yml";
-
 
 int main(int argc, const char **argv) {
     VideoCapture source;
@@ -35,23 +33,26 @@ int main(int argc, const char **argv) {
     else
         source.open(argv[1]);
 
-    capSize = Size(source.get(CAP_PROP_FRAME_WIDTH), source.get(CAP_PROP_FRAME_HEIGHT));
+    FaceRecognizer::FaceRecognizer recognizer;
 
-    FaceRecognizer::FaceRecognizer recognizer(capSize);
-
-    if (!recognizer.readNet(caffeConfigFile, caffeWeightFile))
+    if (!recognizer.readNet(configFile, weightFile)) {
+        log(ERROR, "Cannot read face detection network");
         return EXIT_FAILURE;
-    if (!recognizer.readRecognitionModel(modelFile))
-        cerr << "Could not open recognition model " << modelFile << endl;
-    if (!recognizer.readLabels(labelsFile))
+    }
+    if (!recognizer.readRecognitionModel(modelFile)) {
+        log(WARNING, "Could not open recognition model", modelFile);
+    }
+    if (!recognizer.readLabels(labelsFile)) {
+        log(ERROR, "Cannot read labels file");
         return EXIT_FAILURE;
-    if (!recognizer.readImageList(imgsList))
+    }
+    if (!recognizer.readImageList(imgsList)) {
+        log(ERROR, "Cannot read images list");
         return EXIT_FAILURE;
-
+    }
 
     namedWindow("Face Detection");
-    int detectTh = 95;
-    recognizer.confidenceThreshold = .95;
+    int detectTh = 70;
     auto detectThCb = [](int pos, void *data) {
         static_cast<FaceRecognizer::FaceRecognizer *>(data)->confidenceThreshold = float(pos) / 100;
     };
@@ -86,44 +87,52 @@ int main(int argc, const char **argv) {
                 Scalar(0, 0, 255), 2);
         imshow("Face Detection", img);
 
-        int k = waitKey(5);
+        recognizer.lastFaces = recognizer.faces;
+
+        int k = waitKey(1);
         if (k == 'l') {
-            string label = recognizer.addLabel();
-            printf("Label %s added with index %i\n", label.c_str(), recognizer.labels.size() - 1);
+            std::cout << "Label: ";
+            std::string lbl;
+            std::getline(std::cin, lbl);
+            recognizer.addLabel(lbl);
+            log(INFO, "Label", lbl, "added with index", recognizer.labels.size() - 1);
         }
         if (k == 'n') {
             if (recognizer.currentLabel < recognizer.labels.size() - 1)
                 recognizer.currentLabel++;
             else
                 recognizer.currentLabel = 0;
-            printf("Current label is %i - %s\n", recognizer.currentLabel,
-                   recognizer.labels[recognizer.currentLabel].c_str());
+            log(INFO, "Current label is", recognizer.currentLabel, "-",
+                recognizer.labels[recognizer.currentLabel]);
         }
         if (k == 'p') {
             if (recognizer.currentLabel > 0)
                 recognizer.currentLabel--;
             else
                 recognizer.currentLabel = recognizer.labels.size() - 1;
-            printf("Current label is %i - %s\n", recognizer.currentLabel,
-                   recognizer.labels[recognizer.currentLabel].c_str());
+            log(INFO, "Current label is", recognizer.currentLabel, "-",
+                recognizer.labels[recognizer.currentLabel]);
         }
         if (k == 's') {
             if (!recognizer.labels.empty()) {
                 if (!recognizer.faces.empty()) {
                     Mat f = frame(recognizer.faces[0].rect);
                     string path = recognizer.addTrainImage(imgsDir, f);
-                    printf("Recognizer train image %i saved to %s\n",
-                           recognizer.imgNum[recognizer.currentLabel], path.c_str());
-                } else cerr << "There is no faces" << endl;
-            } else cerr << "Labels are empty! Press 'l' to add new" << endl;
+                    log(INFO, "Recognizer train image", recognizer.imgNum[recognizer.currentLabel],
+                        "saved to", path);
+                } else log(ERROR, "There is no faces");
+            } else log(ERROR, "Labels are empty! Press 'l' to add new");
         }
         if (k == 't') {
             bool ok = recognizer.trainRecognizer(imgsList, modelFile);
-            cout << "Model" << (ok ? "" : " not") << " trained" << endl;
+            if (ok)
+                log(INFO, "Model trained successful");
+            else
+                log(WARNING, "Model has not been trained");
         }
         if (k == 'd') {
             shouldRecDir = !shouldRecDir;
-            cout << "Should" << (shouldRecDir ? "" : " not") << " recognize faces` directions" << endl;
+            log(INFO, "Should", (shouldRecDir ? "" : " not"), "recognize faces` directions");
         }
         if (k == 27) {
             destroyAllWindows();
