@@ -87,6 +87,29 @@ namespace FaceRecognizer {
         return dir;
     }
 
+    bool Face::checkBounds(const cv::Size &imgSize) {
+        if (rect.width <= 0 || rect.height <= 0)
+            return false;
+        if (rect.x < 0) rect.x = 0;
+        if (rect.y < 0) rect.y = 0;
+        if (rect.x >= imgSize.width)
+            rect.x = imgSize.width - rect.width;
+        if (rect.y >= imgSize.height)
+            rect.y = imgSize.height - rect.height;
+        if (rect.x + rect.width > imgSize.width)
+            rect.width = imgSize.width - rect.x;
+        if (rect.y + rect.height > imgSize.height)
+            rect.height = imgSize.height - rect.y;
+        if (rect.width > imgSize.width)
+            rect.width = imgSize.width;
+        if (rect.height > imgSize.height)
+            rect.height = imgSize.height;
+        if (rect.x < 0) rect.x = 0;
+        if (rect.y < 0) rect.y = 0;
+        return true;
+    }
+
+
     FaceRecognizer::FaceRecognizer() {
         model = cv::face::LBPHFaceRecognizer::create();
     }
@@ -182,19 +205,9 @@ namespace FaceRecognizer {
 
                 Face f;
                 f.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
-
-                if (f.rect.width <= 0 || f.rect.height <= 0)
+                bool ok = f.checkBounds(cv::Size(img.cols, img.rows));
+                if (!ok)
                     continue;
-                if (f.rect.x < 0) f.rect.x = 0;
-                if (f.rect.y < 0) f.rect.y = 0;
-                if (f.rect.x >= img.cols)
-                    f.rect.x = img.cols - f.rect.width;
-                if (f.rect.y >= img.rows)
-                    f.rect.y = img.rows - f.rect.height;
-                if (f.rect.x + f.rect.width > img.cols)
-                    f.rect.width = img.cols - f.rect.x;
-                if (f.rect.y + f.rect.height > img.rows)
-                    f.rect.height = img.rows - f.rect.y;
 
                 cv::Mat gray;
                 cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
@@ -217,9 +230,42 @@ namespace FaceRecognizer {
             }
         }
 
+        sortFacesByScore();
+        preventOverlapping();
+
         return !faces.empty();
     }
 
+    void FaceRecognizer::sortFacesByScore() {
+        auto countScore = [&](const Face &f) -> int {
+            int score = f.confidence;
+            if (f.last != nullptr)
+                score += f.last->confidence;
+            if (!model->empty()) {
+                if (f.label != -1)
+                    score *= 2;
+            }
+            return score;
+        };
+        std::sort(faces.begin(), faces.end(), [&](const Face &a, const Face &b) -> bool {
+            return countScore(a) > countScore(b);
+        });
+    }
+
+    void FaceRecognizer::preventOverlapping() {
+        for (int i = 0; i < faces.size(); i++) {
+            Face &f = faces[i];
+            cv::Rect &rect = f.rect;
+            for (int j = i + 1; j < faces.size(); j++) {
+                Face &f2 = faces[j];
+                cv::Rect &rect2 = f2.rect;
+                if (((rect & rect2).area() > 0)) {
+                    faces.erase(faces.begin() + j);
+                    j--;
+                }
+            }
+        }
+    }
 
     void FaceRecognizer::addLabel(std::string &label) {
         labels.emplace_back(label);
@@ -250,13 +296,12 @@ namespace FaceRecognizer {
                         color, 2);
             }
 
-            putText(img, std::to_string(f.confidence), cv::Point(f.rect.x, f.rect.y - 50), cv::FONT_HERSHEY_SIMPLEX,
-                    0.9,
-                    color, 2);
+            putText(img, std::to_string(f.confidence), cv::Point(f.rect.x, f.rect.y - 50),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.9, color, 2);
 
             if (f.last != nullptr)
-                putText(img, f.getMovingDir(), cv::Point(f.rect.x, f.rect.y - 25), cv::FONT_HERSHEY_SIMPLEX, 0.9,
-                        color, 2);
+                putText(img, f.getMovingDir(), cv::Point(f.rect.x, f.rect.y - 25),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.9, color, 2);
         }
     }
 

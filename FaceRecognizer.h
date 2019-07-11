@@ -45,6 +45,8 @@ namespace FaceRecognizer {
 
         Face(cv::Point p1, cv::Point p2, int label);
 
+        bool checkBounds(const cv::Size &imgSize);
+
         std::string getMovingDir() const;
     };
 
@@ -73,6 +75,10 @@ namespace FaceRecognizer {
         bool trainRecognizer(std::string imsList, std::string modelFile);
 
         bool detectFaces(cv::Mat &img);
+
+        void sortFacesByScore();
+
+        void preventOverlapping();
 
         Face *getLastFace(Face &now);
 

@@ -42,15 +42,15 @@ template<typename T, typename... Args>
 void log(int type, T t, Args... args) {
     switch (type) {
         case INFO:
-            cout << "INFO: ";
+            cout << "\033[;32mINFO:\033[0m ";
             coutMany(t, args...);
             break;
         case WARNING:
-            cerr << "WARNING: ";
-            cerrMany(t, args...);
+            cout << "\033[1;33mWARNING:\033[0m ";
+            coutMany(t, args...);
             break;
         case ERROR:
-            cerr << "ERROR: ";
+            cerr << "\033[1;31mERROR:\033[0m ";
             cerrMany(t, args...);
             break;
     };

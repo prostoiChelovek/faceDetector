@@ -69,7 +69,6 @@ int main(int argc, const char **argv) {
     double tt_opencvDNN = 0;
     double fpsOpencvDNN = 0;
 
-    bool shouldPredict = false;
     bool shouldRecDir = false;
     while (source.isOpened()) {
         source >> frame;
