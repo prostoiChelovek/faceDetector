@@ -23,20 +23,33 @@ namespace Faces {
     class Face {
     public:
         cv::Rect rect;
-        int label = -1;
 
         int confidence = 0;
 
-        cv::Point offset; // distance between current position and last
-        Face *last = nullptr;
-
         const static int minOffset = 5;
+        cv::Point offset; // distance between current position and last
+
+        const static int minLabelNotChanged = 5;
+        long labelNotChanged = 0; // number of consecutive label recognitions
+
+        Face *last = nullptr;
 
         Face() = default;
 
         Face(cv::Point p1, cv::Point p2, int label);
 
         bool checkBounds(const cv::Size &imgSize);
+
+        void setLast(Face *f);
+
+        void setLabel(int lbl);
+
+        // -1 -- not recognized
+        // -2 -- label changed recently
+        int getLabel() const;
+
+    private:
+        int label = -1;
     };
 
 }

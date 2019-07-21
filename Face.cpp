@@ -32,4 +32,29 @@ namespace Faces {
         return true;
     }
 
+    void Face::setLast(Face *f) {
+        last = f;
+        if (last != nullptr) {
+            offset.x = rect.x - last->rect.x;
+            offset.y = rect.y - last->rect.y;
+        }
+    }
+
+    void Face::setLabel(int lbl) {
+        label = lbl;
+        if (last != nullptr) {
+            if (label == last->label)
+                labelNotChanged = last->labelNotChanged + 1;
+            else
+                labelNotChanged = 0;
+        }
+    }
+
+    int Face::getLabel() const {
+        if (labelNotChanged >= minLabelNotChanged)
+            return label;
+        else
+            return -2;
+    }
+
 }

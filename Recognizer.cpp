@@ -129,11 +129,7 @@ namespace Faces {
 
                 f.confidence = confidence * 100;
 
-                f.last = getLastFace(f);
-                if (f.last != nullptr) {
-                    f.offset.x = f.rect.x - f.last->rect.x;
-                    f.offset.y = f.rect.y - f.last->rect.y;
-                }
+                f.setLast(getLastFace(f));
 
                 faces.emplace_back(f);
             }
@@ -152,7 +148,7 @@ namespace Faces {
             for (Face &f : faces) {
                 cv::Mat resized = gray.clone()(f.rect);
                 cv::resize(resized, resized, faceSize, 1, 1);
-                f.label = model->predict(resized);
+                f.setLabel(model->predict(resized));
             }
             return true;
         }
@@ -171,7 +167,8 @@ namespace Faces {
             if (f.last != nullptr)
                 score += f.last->confidence;
             if (!model->empty()) {
-                if (f.label != -1)
+                score += f.labelNotChanged / 1.5;
+                if (f.getLabel() > -1)
                     score *= 2;
             }
             // when face is close to camera, the most probable prediction,
@@ -222,8 +219,10 @@ namespace Faces {
         cv::Scalar clr = std::move(color);
         for (const Face &f : faces) {
             // Color ->
-            if (f.label == -1)
+            if (f.getLabel() == -1)
                 clr = cv::Scalar(0, 0, 255);
+            if (f.getLabel() == -2)
+                clr = cv::Scalar(0, 125, 255);
             if (model->empty())
                 clr = cv::Scalar(255, 0, 0);
             // <- Color
@@ -232,8 +231,8 @@ namespace Faces {
 
             // Label ->
             std::string text = std::to_string(f.confidence);
-            if (f.label != -1) {
-                std::string label = f.label < labels.size() ? labels[f.label] : "WTF";
+            if (f.getLabel() > -1) {
+                std::string label = f.getLabel() < labels.size() ? labels[f.getLabel()] : "WTF";
                 text += " - " + label;
             }
             std::for_each(text.begin(), text.end(),
