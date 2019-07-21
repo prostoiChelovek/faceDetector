@@ -148,14 +148,11 @@ namespace FaceRecognizer {
     bool FaceRecognizer::readRecognitionModel(std::string file) {
         try {
             model->read(file);
-        } catch (...) {
+        } catch (std::exception &e) {
+            std::cerr << "Cannot read face recognition model: " << e.what() << std::endl;
             return false;
         }
-        if (model->empty()) {
-            std::cerr << "Could not load face recognition model " << file << std::endl;
-            return false;
-        }
-        return true;
+        return !model->empty();
     }
 
     bool FaceRecognizer::readLabels(std::string file) {
@@ -209,16 +206,7 @@ namespace FaceRecognizer {
                 if (!ok)
                     continue;
 
-                cv::Mat gray;
-                cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-
                 f.confidence = confidence * 100;
-
-                if (!model->empty()) {
-                    cv::Mat resized = gray.clone()(f.rect);
-                    cv::resize(resized, resized, faceSize, 1, 1);
-                    f.label = model->predict(resized);
-                }
 
                 f.last = getLastFace(f);
                 if (f.last != nullptr) {
@@ -236,7 +224,27 @@ namespace FaceRecognizer {
         return !faces.empty();
     }
 
+    bool FaceRecognizer::recognizeFaces(cv::Mat &img) {
+        if (!model->empty()) {
+            cv::Mat gray;
+            cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+            for (Face &f : faces) {
+                cv::Mat resized = gray.clone()(f.rect);
+                cv::resize(resized, resized, faceSize, 1, 1);
+                f.label = model->predict(resized);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool FaceRecognizer::operator()(cv::Mat &img) {
+        if (!detectFaces(img)) return false;
+        return recognizeFaces(img);
+    }
+
     void FaceRecognizer::sortFacesByScore() {
+        // in most cases, false predictions occurrence when face is too close to camera
         auto countScore = [&](const Face &f) -> int {
             int score = f.confidence;
             if (f.last != nullptr)
@@ -245,6 +253,9 @@ namespace FaceRecognizer {
                 if (f.label != -1)
                     score *= 2;
             }
+            // when face is close to camera, the most probable prediction,
+            // that is nearer to left-top corner
+            score -= (f.rect.x + f.rect.y) * 1;
             return score;
         };
         std::sort(faces.begin(), faces.end(), [&](const Face &a, const Face &b) -> bool {
@@ -287,21 +298,26 @@ namespace FaceRecognizer {
     }
 
     void FaceRecognizer::draw(cv::Mat &img, cv::Scalar color) {
+        cv::Scalar clr = std::move(color);
         for (const Face &f : faces) {
-            cv::rectangle(img, f.rect, color, 2, 4);
+            if (f.label == -1)
+                clr = cv::Scalar(0, 0, 255);
+            if (model->empty())
+                clr = cv::Scalar(255, 0, 0);
 
-            if (f.label != -1 || !model->empty()) {
-                std::string label = f.label < labels.size() ? labels[f.label] : "";
+            if (f.label != -1) {
+                std::string label = f.label < labels.size() ? labels[f.label] : "WTF";
                 putText(img, label, cv::Point(f.rect.x, f.rect.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.9,
-                        color, 2);
+                        clr, 2);
             }
+            cv::rectangle(img, f.rect, clr, 2, 4);
 
             putText(img, std::to_string(f.confidence), cv::Point(f.rect.x, f.rect.y - 50),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.9, color, 2);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.9, clr, 2);
 
             if (f.last != nullptr)
                 putText(img, f.getMovingDir(), cv::Point(f.rect.x, f.rect.y - 25),
-                        cv::FONT_HERSHEY_SIMPLEX, 0.9, color, 2);
+                        cv::FONT_HERSHEY_SIMPLEX, 0.9, clr, 2);
         }
     }
 

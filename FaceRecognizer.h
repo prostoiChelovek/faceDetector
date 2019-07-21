@@ -76,6 +76,10 @@ namespace FaceRecognizer {
 
         bool detectFaces(cv::Mat &img);
 
+        bool recognizeFaces(cv::Mat &img);
+
+        bool operator()(cv::Mat &img);
+
         void sortFacesByScore();
 
         void preventOverlapping();

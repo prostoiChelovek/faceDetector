@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
     if (!recognizer.readRecognitionModel(modelFile)) {
-        log(WARNING, "Could not open recognition model", modelFile);
+        log(WARNING, "Could not load face recognition model", modelFile);
     }
     if (!recognizer.readLabels(labelsFile)) {
         log(ERROR, "Cannot read labels file");
@@ -77,7 +77,7 @@ int main(int argc, const char **argv) {
         frame.copyTo(img);
         double t = getTickCount();
 
-        recognizer.detectFaces(frame);
+        recognizer(frame);
         recognizer.draw(img);
 
         tt_opencvDNN = ((double) getTickCount() - t) / getTickFrequency();

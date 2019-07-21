@@ -56,4 +56,24 @@ void log(int type, T t, Args... args) {
     };
 }
 
+vector<string> split(const string &str, const string &delim) {
+    vector<string> parts;
+    size_t start, end = 0;
+    while (end < str.size()) {
+        start = end;
+        while (start < str.size() && (delim.find(str[start]) != string::npos)) {
+            start++;  // skip initial whitespace
+        }
+        end = start;
+        while (end < str.size() && (delim.find(str[end]) == string::npos)) {
+            end++; // skip to end of word
+        }
+        if (end - start != 0) {  // just ignore zero-length strings.
+            parts.emplace_back(str, start, end - start);
+        }
+    }
+    return parts;
+}
+
+
 #endif //VIDEOTRANS_UTILS_HPP
