@@ -74,19 +74,6 @@ namespace FaceRecognizer {
         rect = cv::Rect(p1, p2);
     }
 
-    std::string Face::getMovingDir() const {
-        std::string dir;
-        if (offset.x >= minOffset)
-            dir += " right";
-        if (-offset.x >= minOffset)
-            dir += " left";
-        if (-offset.y >= minOffset)
-            dir += " top";
-        if (offset.y >= minOffset)
-            dir += " down";
-        return dir;
-    }
-
     bool Face::checkBounds(const cv::Size &imgSize) {
         if (rect.width <= 0 || rect.height <= 0)
             return false;
@@ -300,24 +287,70 @@ namespace FaceRecognizer {
     void FaceRecognizer::draw(cv::Mat &img, cv::Scalar color) {
         cv::Scalar clr = std::move(color);
         for (const Face &f : faces) {
+            // Color ->
             if (f.label == -1)
                 clr = cv::Scalar(0, 0, 255);
             if (model->empty())
                 clr = cv::Scalar(255, 0, 0);
+            // <- Color
 
-            if (f.label != -1) {
-                std::string label = f.label < labels.size() ? labels[f.label] : "WTF";
-                putText(img, label, cv::Point(f.rect.x, f.rect.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.9,
-                        clr, 2);
-            }
             cv::rectangle(img, f.rect, clr, 2, 4);
 
-            putText(img, std::to_string(f.confidence), cv::Point(f.rect.x, f.rect.y - 50),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.9, clr, 2);
+            // Label ->
+            std::string text = std::to_string(f.confidence);
+            if (f.label != -1) {
+                std::string label = f.label < labels.size() ? labels[f.label] : "WTF";
+                text += " - " + label;
+            }
+            std::for_each(text.begin(), text.end(),
+                          [](char &ch) { ch = ::toupper(static_cast<unsigned char>(ch)); });
 
-            if (f.last != nullptr)
-                putText(img, f.getMovingDir(), cv::Point(f.rect.x, f.rect.y - 25),
-                        cv::FONT_HERSHEY_SIMPLEX, 0.9, clr, 2);
+            cv::rectangle(img, cv::Rect(f.rect.x, f.rect.y - 20, f.rect.width, 25),
+                          clr, cv::FILLED, 4);
+            cv::putText(img, text, f.rect.tl(),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+            // <- Label
+
+            // Moving direction ->
+            auto drawCrn = [&](int x, int y, int width, int height) {
+                cv::Point start(x, y);
+                cv::Point end = start;
+                if (width != 0)
+                    end.x += width;
+                if (height != 0)
+                    end.y += height;
+                cv::line(img, start, end, cv::Scalar(255, 255, 255), 3);
+            };
+
+            // Handle transverse directions(like right-up)
+            // ie when moving in one direction - draw it on center
+            // but when moving in two direction - draw them on corner
+            int h = f.rect.height / 2;
+            int startY = f.rect.y + (f.rect.height / 4);
+            if (-f.offset.y >= f.minOffset) // up
+                startY = f.rect.y - 20;
+            if (f.offset.y >= f.minOffset) { // down
+                h = -h;
+                startY = f.rect.br().y;
+            }
+            int w = f.rect.width / 2;
+            int startX = f.rect.x + (f.rect.width / 4);
+            if (f.offset.x >= f.minOffset) { // right
+                w = -w;
+                startX = f.rect.br().x;
+            }
+            if (-f.offset.x >= f.minOffset) // left
+                startX = f.rect.x;
+
+            if (f.offset.x >= f.minOffset) // right
+                drawCrn(f.rect.br().x, startY, 0, h);
+            if (-f.offset.x >= f.minOffset) // left
+                drawCrn(f.rect.x, startY, 0, h);
+            if (-f.offset.y >= f.minOffset) // up
+                drawCrn(startX, f.rect.y - 20, w, 0);
+            if (f.offset.y >= f.minOffset) // down
+                drawCrn(startX, f.rect.br().y, w, 0);
+            // <- Moving direction
         }
     }
 
