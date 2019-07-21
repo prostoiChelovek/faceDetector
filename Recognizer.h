@@ -17,39 +17,16 @@
 #include <opencv2/face.hpp>
 #include <opencv2/tracking.hpp>
 
-namespace FaceRecognizer {
+#include "utils.hpp"
+#include "Face.h"
+
+namespace Faces {
 
     extern cv::Size faceSize;
 
-    bool getFileContent(std::string fileName, std::vector<std::string> &vecOfStrs);
-
-    bool
-    read_csv(const std::string &filename, std::vector<cv::Mat> &images, std::vector<int> &labels, char separator = ';');
-
     bool normalizeImages(const std::string &filename, char separator = ';');
 
-    double getDist(cv::Point a, cv::Point b);
-
-    struct Face {
-        cv::Rect rect;
-        int label = -1;
-
-        int confidence = 0;
-
-        cv::Point offset; // distance between current position and last
-        Face *last = nullptr;
-
-        const static int minOffset = 5;
-
-        Face() = default;
-
-        Face(cv::Point p1, cv::Point p2, int label);
-
-        bool checkBounds(const cv::Size &imgSize);
-    };
-
-
-    class FaceRecognizer {
+    class Recognizer {
     public:
         cv::Size inSize = cv::Size(300, 300);
         double inScaleFactor = 1.0;
@@ -66,9 +43,9 @@ namespace FaceRecognizer {
         std::vector<std::string> labels;
         std::map<int, int> imgNum;
 
-        FaceRecognizer();
+        Recognizer();
 
-        ~FaceRecognizer();
+        ~Recognizer();
 
         bool trainRecognizer(std::string imsList, std::string modelFile);
 

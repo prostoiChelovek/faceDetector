@@ -2,50 +2,11 @@
 // Created by prostoichelovek on 08.05.19.
 //
 
-#include "FaceRecognizer.h"
+#include "Recognizer.h"
 
-namespace FaceRecognizer {
+namespace Faces {
 
     cv::Size faceSize = cv::Size(200, 240);
-
-    bool getFileContent(std::string fileName, std::vector<std::string> &vecOfStrs) {
-        std::ifstream in(fileName.c_str());
-        if (!in) {
-            std::cerr << "Cannot open the file: " << fileName << std::endl;
-            return false;
-        }
-        std::string str;
-        while (std::getline(in, str)) {
-            if (!str.empty())
-                vecOfStrs.push_back(str);
-        }
-        in.close();
-        return true;
-    }
-
-    bool read_csv(const std::string &filename, std::vector<cv::Mat> &images, std::vector<int> &labels,
-                  char separator) {
-        std::ifstream file(filename.c_str(), std::ifstream::in);
-        if (!file) {
-            std::cerr << "No valid input file was given, please check the given filename." << std::endl;
-            return false;
-        }
-        std::string line, path, classlabel;
-        while (getline(file, line)) {
-            std::stringstream liness(line);
-            getline(liness, path, separator);
-            getline(liness, classlabel);
-            if (!path.empty() && !classlabel.empty()) {
-                images.push_back(cv::imread(path, 0));
-                labels.push_back(atoi(classlabel.c_str()));
-            }
-        }
-        return labels.size() == images.size();
-    }
-
-    double getDist(cv::Point a, cv::Point b) {
-        return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
-    }
 
     bool normalizeImages(const std::string &filename, char separator) {
         std::ifstream file(filename.c_str(), std::ifstream::in);
@@ -70,43 +31,16 @@ namespace FaceRecognizer {
     }
 
 
-    Face::Face(cv::Point p1, cv::Point p2, int label) : label(label) {
-        rect = cv::Rect(p1, p2);
-    }
-
-    bool Face::checkBounds(const cv::Size &imgSize) {
-        if (rect.width <= 0 || rect.height <= 0)
-            return false;
-        if (rect.x < 0) rect.x = 0;
-        if (rect.y < 0) rect.y = 0;
-        if (rect.x >= imgSize.width)
-            rect.x = imgSize.width - rect.width;
-        if (rect.y >= imgSize.height)
-            rect.y = imgSize.height - rect.height;
-        if (rect.x + rect.width > imgSize.width)
-            rect.width = imgSize.width - rect.x;
-        if (rect.y + rect.height > imgSize.height)
-            rect.height = imgSize.height - rect.y;
-        if (rect.width > imgSize.width)
-            rect.width = imgSize.width;
-        if (rect.height > imgSize.height)
-            rect.height = imgSize.height;
-        if (rect.x < 0) rect.x = 0;
-        if (rect.y < 0) rect.y = 0;
-        return true;
-    }
-
-
-    FaceRecognizer::FaceRecognizer() {
+    Recognizer::Recognizer() {
         model = cv::face::LBPHFaceRecognizer::create();
     }
 
-    FaceRecognizer::~FaceRecognizer() {
+    Recognizer::~Recognizer() {
         labelsFs.close();
         imsListFs.close();
     }
 
-    Face *FaceRecognizer::getLastFace(Face &now) {
+    Face *Recognizer::getLastFace(Face &now) {
         int minDist = -1;
         Face *r = nullptr;
         for (auto &lastFace : lastFaces) {
@@ -122,7 +56,7 @@ namespace FaceRecognizer {
     }
 
 
-    bool FaceRecognizer::readNet(std::string caffeConfigFile, std::string caffeWeightFile) {
+    bool Recognizer::readNet(std::string caffeConfigFile, std::string caffeWeightFile) {
         net = cv::dnn::readNet(caffeConfigFile, caffeWeightFile);
         if (net.empty()) {
             fprintf(stderr, "Could not load net (%s, %s)", caffeConfigFile.c_str(), caffeWeightFile.c_str());
@@ -132,7 +66,7 @@ namespace FaceRecognizer {
     }
 
 
-    bool FaceRecognizer::readRecognitionModel(std::string file) {
+    bool Recognizer::readRecognitionModel(std::string file) {
         try {
             model->read(file);
         } catch (std::exception &e) {
@@ -142,7 +76,7 @@ namespace FaceRecognizer {
         return !model->empty();
     }
 
-    bool FaceRecognizer::readLabels(std::string file) {
+    bool Recognizer::readLabels(std::string file) {
         if (!getFileContent(file, labels))
             return false;
         labelsFs = std::ofstream(file, std::ios::app);
@@ -153,7 +87,7 @@ namespace FaceRecognizer {
         return true;
     }
 
-    bool FaceRecognizer::readImageList(std::string file) {
+    bool Recognizer::readImageList(std::string file) {
         imsListFs = std::ofstream(file, std::ios::app);
         if (!imsListFs.is_open()) {
             std::cerr << "Could not open image list file " << file << std::endl;
@@ -168,7 +102,7 @@ namespace FaceRecognizer {
         return true;
     }
 
-    bool FaceRecognizer::detectFaces(cv::Mat &img) {
+    bool Recognizer::detectFaces(cv::Mat &img) {
         cv::Mat inputBlob = cv::dnn::blobFromImage(img, inScaleFactor, inSize, meanVal,
                                                    false, false);
         net.setInput(inputBlob, "data");
@@ -211,7 +145,7 @@ namespace FaceRecognizer {
         return !faces.empty();
     }
 
-    bool FaceRecognizer::recognizeFaces(cv::Mat &img) {
+    bool Recognizer::recognizeFaces(cv::Mat &img) {
         if (!model->empty()) {
             cv::Mat gray;
             cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
@@ -225,12 +159,12 @@ namespace FaceRecognizer {
         return false;
     }
 
-    bool FaceRecognizer::operator()(cv::Mat &img) {
+    bool Recognizer::operator()(cv::Mat &img) {
         if (!detectFaces(img)) return false;
         return recognizeFaces(img);
     }
 
-    void FaceRecognizer::sortFacesByScore() {
+    void Recognizer::sortFacesByScore() {
         // in most cases, false predictions occurrence when face is too close to camera
         auto countScore = [&](const Face &f) -> int {
             int score = f.confidence;
@@ -250,7 +184,7 @@ namespace FaceRecognizer {
         });
     }
 
-    void FaceRecognizer::preventOverlapping() {
+    void Recognizer::preventOverlapping() {
         for (int i = 0; i < faces.size(); i++) {
             Face &f = faces[i];
             cv::Rect &rect = f.rect;
@@ -265,7 +199,7 @@ namespace FaceRecognizer {
         }
     }
 
-    void FaceRecognizer::addLabel(std::string &label) {
+    void Recognizer::addLabel(std::string &label) {
         labels.emplace_back(label);
         currentLabel = labels.size() - 1;
         imgNum[currentLabel] = 0;
@@ -273,7 +207,7 @@ namespace FaceRecognizer {
         labelsFs.flush();
     }
 
-    std::string FaceRecognizer::addTrainImage(std::string imagesDir, cv::Mat &img) {
+    std::string Recognizer::addTrainImage(std::string imagesDir, cv::Mat &img) {
         std::string path = imagesDir + "/" + std::to_string(currentLabel)
                            + "_" + std::to_string(imgNum[currentLabel]) + ".png";
         cv::resize(img, img, faceSize, 1, 1);
@@ -284,7 +218,7 @@ namespace FaceRecognizer {
         return path;
     }
 
-    void FaceRecognizer::draw(cv::Mat &img, cv::Scalar color) {
+    void Recognizer::draw(cv::Mat &img, cv::Scalar color) {
         cv::Scalar clr = std::move(color);
         for (const Face &f : faces) {
             // Color ->
@@ -354,7 +288,7 @@ namespace FaceRecognizer {
         }
     }
 
-    bool FaceRecognizer::trainRecognizer(std::string imsList, std::string modelFile) {
+    bool Recognizer::trainRecognizer(std::string imsList, std::string modelFile) {
         std::vector<cv::Mat> imgs;
         std::vector<int> labels;
         read_csv(imsList, imgs, labels);

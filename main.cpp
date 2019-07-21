@@ -9,8 +9,7 @@
 #include "opencv2/face.hpp"
 #include <opencv2/tracking.hpp>
 
-#include "FaceRecognizer.h"
-#include "utils.hpp"
+#include "Recognizer.h"
 
 using namespace cv;
 using namespace std;
@@ -33,7 +32,7 @@ int main(int argc, const char **argv) {
     else
         source.open(argv[1]);
 
-    FaceRecognizer::FaceRecognizer recognizer;
+    Faces::Recognizer recognizer;
 
     if (!recognizer.readNet(configFile, weightFile)) {
         log(ERROR, "Cannot read face detection network");
@@ -54,13 +53,13 @@ int main(int argc, const char **argv) {
     namedWindow("Face Detection");
     int detectTh = 70;
     auto detectThCb = [](int pos, void *data) {
-        static_cast<FaceRecognizer::FaceRecognizer *>(data)->confidenceThreshold = float(pos) / 100;
+        static_cast<Faces::Recognizer *>(data)->confidenceThreshold = float(pos) / 100;
     };
     createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &recognizer);
     int recTh = 70;
     recognizer.model->setThreshold(recTh);
     auto recThCb = [](int pos, void *data) {
-        static_cast<FaceRecognizer::FaceRecognizer *>(data)->model->setThreshold(pos);
+        static_cast<Faces::Recognizer *>(data)->model->setThreshold(pos);
     };
     createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, &recognizer);
     
