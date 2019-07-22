@@ -19,6 +19,7 @@
 
 #include "utils.hpp"
 #include "Face.h"
+#include "Callbacks.hpp"
 
 namespace Faces {
 
@@ -42,6 +43,8 @@ namespace Faces {
         int currentLabel = 0;
         std::vector<std::string> labels;
         std::map<int, int> imgNum;
+
+        Callbacks callbacks;
 
         Recognizer();
 

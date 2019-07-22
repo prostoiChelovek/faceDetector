@@ -34,6 +34,8 @@ namespace Faces {
 
         Face *last = nullptr;
 
+        std::map<std::string, int> executedCallbacks;
+
         Face() = default;
 
         Face(cv::Point p1, cv::Point p2, int label);
@@ -48,8 +50,15 @@ namespace Faces {
         // -2 -- label changed recently
         int getLabel() const;
 
+        bool hasMoved() const;
+
+        bool operator==(const Face &f);
+
+        bool operator!=(const Face &f);
+
     private:
         int label = -1;
+
     };
 
 }

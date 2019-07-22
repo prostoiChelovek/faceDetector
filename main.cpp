@@ -50,6 +50,30 @@ int main(int argc, const char **argv) {
         return EXIT_FAILURE;
     }
 
+    // Callbacks ->
+
+    recognizer.callbacks.newCallback("faceDetected", Faces::CallbackFn([](Faces::Face *f) {
+        log(INFO, "Face detected", f->getLabel(), f->confidence);
+    }), 5, true);
+
+    recognizer.callbacks.newCallback("faceRecognized", Faces::CallbackFn([](Faces::Face *f) {
+        log(INFO, "Face recognized", f->getLabel(), f->confidence);
+    }), 35, true);
+
+    recognizer.callbacks.newCallback("unknownFace", Faces::CallbackFn([](Faces::Face *f) {
+        log(INFO, "Unknown face!", f->getLabel(), f->confidence);
+    }), 35, true);
+
+    recognizer.callbacks.newCallback("labelConfirmed", Faces::CallbackFn([](Faces::Face *f) {
+        log(INFO, "Face label confirmed", f->getLabel(), f->confidence);
+    }));
+
+    /*recognizer.callbacks.newCallback("faceMoved", Faces::CallbackFn([](Faces::Face *f) {
+        log(INFO, "Face moved", f->getLabel(), f->confidence, f->offset);
+    }), 1);*/
+
+    // <- Callbacks
+
     namedWindow("Face Detection");
     int detectTh = 70;
     auto detectThCb = [](int pos, void *data) {
@@ -62,7 +86,7 @@ int main(int argc, const char **argv) {
         static_cast<Faces::Recognizer *>(data)->model->setThreshold(pos);
     };
     createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, &recognizer);
-    
+
     Mat img, frame;
 
     double tt_opencvDNN = 0;

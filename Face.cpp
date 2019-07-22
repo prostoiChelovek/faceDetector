@@ -35,6 +35,7 @@ namespace Faces {
     void Face::setLast(Face *f) {
         last = f;
         if (last != nullptr) {
+            executedCallbacks = last->executedCallbacks;
             offset.x = rect.x - last->rect.x;
             offset.y = rect.y - last->rect.y;
         }
@@ -55,6 +56,20 @@ namespace Faces {
             return label;
         else
             return -2;
+    }
+
+    bool Face::hasMoved() const {
+        return offset.x >= minOffset || offset.y >= minOffset
+               || -offset.x >= minOffset || -offset.y >= minOffset;
+    }
+
+    bool Face::operator==(const Face &f) {
+        return std::tie(rect, offset, labelNotChanged, confidence)
+               == std::tie(f.rect, f.offset, f.labelNotChanged, f.confidence);
+    }
+
+    bool Face::operator!=(const Face &f) {
+        return !operator==(f);
     }
 
 }

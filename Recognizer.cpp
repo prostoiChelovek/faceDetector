@@ -132,6 +132,10 @@ namespace Faces {
                 f.setLast(getLastFace(f));
 
                 faces.emplace_back(f);
+
+                callbacks.call("faceDetected", &faces[faces.size() - 1]);
+                if (f.hasMoved())
+                    callbacks.call("faceMoved", &faces[faces.size() - 1]);
             }
         }
 
@@ -149,6 +153,13 @@ namespace Faces {
                 cv::Mat resized = gray.clone()(f.rect);
                 cv::resize(resized, resized, faceSize, 1, 1);
                 f.setLabel(model->predict(resized));
+
+                if (f.getLabel() > -1)
+                    callbacks.call("faceRecognized", &f);
+                if (f.getLabel() == -1)
+                    callbacks.call("unknownFace", &f);
+                if (f.getLabel() != -2 && f.last->getLabel() == -2)
+                    callbacks.call("labelConfirmed", &f);
             }
             return true;
         }
