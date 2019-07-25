@@ -36,6 +36,10 @@ namespace Faces {
 
         std::map<std::string, int> executedCallbacks;
 
+        std::vector<cv::Point> landmarks;
+
+        cv::Mat img; // this is aligned face when using dlib
+
         Face() = default;
 
         Face(cv::Point p1, cv::Point p2, int label);

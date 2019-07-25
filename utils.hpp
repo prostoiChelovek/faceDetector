@@ -12,6 +12,14 @@
 
 #include <opencv2/core.hpp>
 
+#ifdef USE_DLIB
+
+#include <dlib/clustering.h>
+#include <dlib/image_io.h>
+#include <dlib/opencv.h>
+
+#endif
+
 enum LogType {
     INFO, WARNING, ERROR
 };
@@ -114,5 +122,21 @@ inline bool read_csv(const std::string &filename, std::vector<cv::Mat> &images, 
 inline double getDist(cv::Point a, cv::Point b) {
     return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
 }
+
+#ifdef USE_DLIB
+
+static dlib::rectangle openCVRectToDlib(const cv::Rect &r) {
+    return dlib::rectangle((long) r.tl().x, (long) r.tl().y, (long) r.br().x - 1, (long) r.br().y - 1);
+}
+
+template<typename T>
+cv::Mat dlibMatrix2cvMat(dlib::matrix<T> matr) {
+    cv::Mat mat = toMat(matr);
+    cv::Mat bgr;
+    cvtColor(mat, bgr, cv::COLOR_RGB2BGR);
+    return bgr;
+}
+
+#endif
 
 #endif //VIDEOTRANS_UTILS_HPP

@@ -25,30 +25,28 @@ string labelsFile = "../labels.txt";
 
 string modelFile = "../model.yml";
 
+string lmsPredictorFile = "../models/shape_predictor_5_face_landmarks.dat";
+
 int main(int argc, const char **argv) {
     VideoCapture source;
     if (argc == 1)
-        source.open(0);
+        source.open(2);
     else
-        source.open(argv[1]);
+        source.open(stoi(argv[1]));
 
     Faces::Recognizer recognizer;
 
-    if (!recognizer.readNet(configFile, weightFile)) {
-        log(ERROR, "Cannot read face detection network");
+    recognizer.readRecognitionModel(modelFile);
+    if (!recognizer.readNet(configFile, weightFile))
         return EXIT_FAILURE;
-    }
-    if (!recognizer.readRecognitionModel(modelFile)) {
-        log(WARNING, "Could not load face recognition model", modelFile);
-    }
-    if (!recognizer.readLabels(labelsFile)) {
-        log(ERROR, "Cannot read labels file");
+    if (!recognizer.readLabels(labelsFile))
         return EXIT_FAILURE;
-    }
-    if (!recognizer.readImageList(imgsList)) {
-        log(ERROR, "Cannot read images list");
+    if (!recognizer.readImageList(imgsList))
         return EXIT_FAILURE;
-    }
+#ifdef USE_DLIB
+    if (!recognizer.readLandmarksPredictor(lmsPredictorFile))
+        return EXIT_FAILURE;
+#endif
 
     // Callbacks ->
 

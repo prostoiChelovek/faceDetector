@@ -6,7 +6,7 @@
 
 namespace Faces {
 
-    cv::Size faceSize = cv::Size(200, 240);
+    cv::Size faceSize = cv::Size(200, 200);
 
     bool normalizeImages(const std::string &filename, char separator) {
         std::ifstream file(filename.c_str(), std::ifstream::in);
@@ -55,11 +55,55 @@ namespace Faces {
         return r;
     }
 
+#ifdef USE_DLIB
 
-    bool Recognizer::readNet(std::string caffeConfigFile, std::string caffeWeightFile) {
-        net = cv::dnn::readNet(caffeConfigFile, caffeWeightFile);
+    bool Recognizer::readLandmarksPredictor(std::string path) {
+        try {
+            dlib::deserialize(path) >> landmarksPredictor;
+            return true;
+        } catch (std::exception &e) {
+            log(ERROR, "Cannot read landmarks predictor from", path, ":", e.what());
+            return false;
+        }
+    }
+
+    std::vector<cv::Mat> Recognizer::normalizeFaces(const cv::Mat &img) {
+        dlib::cv_image<dlib::bgr_pixel> dImg = img;
+        std::vector<cv::Mat> faceChips;
+
+        std::vector<dlib::rectangle> dFaces;
+        for (const Face &f : faces) {
+            dFaces.emplace_back(openCVRectToDlib(f.rect));
+        }
+
+        // Run the face detector on the image, and for each face extract a
+        // copy that has been normalized to 150x150 pixels in size and appropriately rotated
+        // and centered.
+        int i = 0;
+        for (dlib::rectangle face : dFaces) {
+            dlib::full_object_detection shape = landmarksPredictor(dImg, face);
+
+            dlib::matrix<dlib::rgb_pixel> face_chip;
+            dlib::extract_image_chip(dImg, get_face_chip_details(shape, faceSize.width, 0.25), face_chip);
+
+            for (int j = 0; j < shape.num_parts(); j++) {
+                dlib::point pt = shape.part(j);
+                faces[i].landmarks.emplace_back(pt.x(), pt.y());
+            }
+
+            faceChips.emplace_back(dlibMatrix2cvMat(face_chip));
+            i++;
+        }
+
+        return faceChips;
+    }
+
+#endif
+
+    bool Recognizer::readNet(std::string configFile, std::string weightFile) {
+        net = cv::dnn::readNet(configFile, weightFile);
         if (net.empty()) {
-            fprintf(stderr, "Could not load net (%s, %s)", caffeConfigFile.c_str(), caffeWeightFile.c_str());
+            log(ERROR, "Could not load net (", configFile, ", ", weightFile, ")");
             return false;
         }
         return true;
@@ -70,7 +114,7 @@ namespace Faces {
         try {
             model->read(file);
         } catch (std::exception &e) {
-            std::cerr << "Cannot read face recognition model: " << e.what() << std::endl;
+            log(ERROR, "Cannot read face recognition model:", e.what());
             return false;
         }
         return !model->empty();
@@ -81,7 +125,7 @@ namespace Faces {
             return false;
         labelsFs = std::ofstream(file, std::ios::app);
         if (!labelsFs) {
-            std::cerr << "Could not open labels file for write " << file << std::endl;
+            log(ERROR, "Could not open labels file for write", file);
             return false;
         }
         return true;
@@ -90,7 +134,7 @@ namespace Faces {
     bool Recognizer::readImageList(std::string file) {
         imsListFs = std::ofstream(file, std::ios::app);
         if (!imsListFs.is_open()) {
-            std::cerr << "Could not open image list file " << file << std::endl;
+            log(ERROR, "Could not open image list file", file);
             return false;
         }
         std::vector<cv::Mat> imgs;
@@ -147,12 +191,24 @@ namespace Faces {
 
     bool Recognizer::recognizeFaces(cv::Mat &img) {
         if (!model->empty()) {
-            cv::Mat gray;
-            cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+#ifdef USE_DLIB
+            std::vector<cv::Mat> faceImgs = normalizeFaces(img);
+#else
+            std::vector<cv::Mat> faceImgs{};
             for (Face &f : faces) {
-                cv::Mat resized = gray.clone()(f.rect);
-                cv::resize(resized, resized, faceSize, 1, 1);
-                f.setLabel(model->predict(resized));
+                faceImgs.emplace_back(img(f.rect));
+            }
+#endif
+
+            for (int i = 0; i < faces.size(); i++) {
+                Face &f = faces[i];
+                f.img = faceImgs[i];
+
+                cv::Mat gray;
+                cv::cvtColor(f.img, gray, cv::COLOR_BGR2GRAY);
+                cv::resize(gray, gray, faceSize, 1, 1);
+
+                f.setLabel(model->predict(gray));
 
                 if (f.getLabel() > -1)
                     callbacks.call("faceRecognized", &f);
@@ -226,8 +282,20 @@ namespace Faces {
         return path;
     }
 
-    void Recognizer::draw(cv::Mat &img, cv::Scalar color) {
-        cv::Scalar clr = std::move(color);
+    void Recognizer::draw(cv::Mat &img, bool displayAligned) {
+        cv::Scalar clr = cv::Scalar(0, 255, 0);
+
+#ifdef USE_DLIB
+        // For aligned faces ->
+        int max_vert = img.rows / faceSize.height;
+        int vert = 0, hor = 0;
+        int cols = (faces.size() / max_vert) * faceSize.width;
+        if (cols == 0 && !faces.empty())
+            cols = faceSize.width;
+        cv::Mat facesImg(img.rows, cols, 16, cv::Scalar(255, 255, 255));
+        // <- For aligned faces
+#endif
+
         for (const Face &f : faces) {
             // Color ->
             if (f.getLabel() == -1)
@@ -295,7 +363,35 @@ namespace Faces {
             if (f.offset.y >= f.minOffset) // down
                 drawCrn(startX, f.rect.br().y, w, 0);
             // <- Moving direction
+
+            // Landmarks ->
+            for (const cv::Point &lm : f.landmarks) {
+                cv::circle(img, lm, 1, clr);
+            }
+            // <- Landmarks
+
+#ifdef USE_DLIB
+            // Aligned faces ->
+            if (displayAligned) {
+                if (vert < max_vert) {
+                    cv::Rect r = cv::Rect(
+                            hor * f.img.cols, vert * f.img.rows,
+                            f.img.cols, f.img.rows
+                    );
+                    f.img.copyTo(facesImg(r));
+                    vert++;
+                } else {
+                    hor++;
+                    vert = 0;
+                }
+            }
+            // <- Aligned faces
+#endif
         }
+#ifdef USE_DLIB
+        if (displayAligned)
+            cv::hconcat(std::vector<cv::Mat>{img, facesImg}, img);
+#endif
     }
 
     bool Recognizer::trainRecognizer(std::string imsList, std::string modelFile) {

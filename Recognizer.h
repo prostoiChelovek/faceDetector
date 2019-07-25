@@ -17,6 +17,18 @@
 #include <opencv2/face.hpp>
 #include <opencv2/tracking.hpp>
 
+#ifdef USE_DLIB
+
+#include <dlib/dnn.h>
+#include <dlib/gui_widgets.h>
+#include <dlib/clustering.h>
+#include <dlib/image_io.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/opencv.h>
+#include <dlib/svm_threaded.h>
+
+#endif
+
 #include "utils.hpp"
 #include "Face.h"
 #include "Callbacks.hpp"
@@ -46,6 +58,10 @@ namespace Faces {
 
         Callbacks callbacks;
 
+#ifdef USE_DLIB
+        dlib::shape_predictor landmarksPredictor;
+#endif
+
         Recognizer();
 
         ~Recognizer();
@@ -64,7 +80,15 @@ namespace Faces {
 
         Face *getLastFace(Face &now);
 
-        bool readNet(std::string caffeConfigFile, std::string caffeWeightFile);
+#ifdef USE_DLIB
+
+        bool readLandmarksPredictor(std::string path);
+
+        std::vector<cv::Mat> normalizeFaces(const cv::Mat &img);
+
+#endif
+
+        bool readNet(std::string configFile, std::string weightFile);
 
         bool readRecognitionModel(std::string file);
 
@@ -76,7 +100,7 @@ namespace Faces {
 
         std::string addTrainImage(std::string imagesDir, cv::Mat &img);
 
-        void draw(cv::Mat &img, cv::Scalar color = cv::Scalar(0, 255, 0));
+        void draw(cv::Mat &img, bool displayAligned = true);
 
     private:
         std::ofstream labelsFs;
