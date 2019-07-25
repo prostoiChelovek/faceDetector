@@ -9,7 +9,7 @@
 #include "opencv2/face.hpp"
 #include <opencv2/tracking.hpp>
 
-#include "Recognizer.h"
+#include "Faces.h"
 
 using namespace cv;
 using namespace std;
@@ -30,43 +30,32 @@ string lmsPredictorFile = "../models/shape_predictor_5_face_landmarks.dat";
 int main(int argc, const char **argv) {
     VideoCapture source;
     if (argc == 1)
-        source.open(2);
+        source.open(0);
     else
         source.open(stoi(argv[1]));
 
-    Faces::Recognizer recognizer;
-
-    recognizer.readRecognitionModel(modelFile);
-    if (!recognizer.readNet(configFile, weightFile))
-        return EXIT_FAILURE;
-    if (!recognizer.readLabels(labelsFile))
-        return EXIT_FAILURE;
-    if (!recognizer.readImageList(imgsList))
-        return EXIT_FAILURE;
-#ifdef USE_DLIB
-    if (!recognizer.readLandmarksPredictor(lmsPredictorFile))
-        return EXIT_FAILURE;
-#endif
+    Faces::Faces faces(configFile, weightFile, lmsPredictorFile, modelFile,
+                       labelsFile, imgsList);
 
     // Callbacks ->
 
-    recognizer.callbacks.newCallback("faceDetected", Faces::CallbackFn([](Faces::Face *f) {
+    faces.callbacks.newCallback("faceDetected", Faces::CallbackFn([](Faces::Face *f) {
         log(INFO, "Face detected", f->getLabel(), f->confidence);
     }), 5, true);
 
-    recognizer.callbacks.newCallback("faceRecognized", Faces::CallbackFn([](Faces::Face *f) {
+    faces.callbacks.newCallback("faceRecognized", Faces::CallbackFn([](Faces::Face *f) {
         log(INFO, "Face recognized", f->getLabel(), f->confidence);
     }), 35, true);
 
-    recognizer.callbacks.newCallback("unknownFace", Faces::CallbackFn([](Faces::Face *f) {
+    faces.callbacks.newCallback("unknownFace", Faces::CallbackFn([](Faces::Face *f) {
         log(INFO, "Unknown face!", f->getLabel(), f->confidence);
     }), 35, true);
 
-    recognizer.callbacks.newCallback("labelConfirmed", Faces::CallbackFn([](Faces::Face *f) {
+    faces.callbacks.newCallback("labelConfirmed", Faces::CallbackFn([](Faces::Face *f) {
         log(INFO, "Face label confirmed", f->getLabel(), f->confidence);
     }));
 
-    /*recognizer.callbacks.newCallback("faceMoved", Faces::CallbackFn([](Faces::Face *f) {
+    /*faces.callbacks.newCallback("faceMoved", Faces::CallbackFn([](Faces::Face *f) {
         log(INFO, "Face moved", f->getLabel(), f->confidence, f->offset);
     }), 1);*/
 
@@ -75,15 +64,15 @@ int main(int argc, const char **argv) {
     namedWindow("Face Detection");
     int detectTh = 70;
     auto detectThCb = [](int pos, void *data) {
-        static_cast<Faces::Recognizer *>(data)->confidenceThreshold = float(pos) / 100;
+        static_cast<Faces::Detector *>(data)->confidenceThreshold = float(pos) / 100;
     };
-    createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &recognizer);
+    createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &faces.detector);
     int recTh = 70;
-    recognizer.model->setThreshold(recTh);
+    faces.recognition.model->setThreshold(recTh);
     auto recThCb = [](int pos, void *data) {
         static_cast<Faces::Recognizer *>(data)->model->setThreshold(pos);
     };
-    createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, &recognizer);
+    createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, &faces.recognition);
 
     Mat img, frame;
 
@@ -98,8 +87,8 @@ int main(int argc, const char **argv) {
         frame.copyTo(img);
         double t = getTickCount();
 
-        recognizer(frame);
-        recognizer.draw(img);
+        faces(frame);
+        faces.draw(img);
 
         tt_opencvDNN = ((double) getTickCount() - t) / getTickFrequency();
         fpsOpencvDNN = 1 / tt_opencvDNN;
@@ -107,44 +96,44 @@ int main(int argc, const char **argv) {
                 Scalar(0, 0, 255), 2);
         imshow("Face Detection", img);
 
-        recognizer.lastFaces = recognizer.faces;
+        faces.update();
 
         int k = waitKey(1);
         if (k == 'l') {
             std::cout << "Label: ";
             std::string lbl;
             std::getline(std::cin, lbl);
-            recognizer.addLabel(lbl);
-            log(INFO, "Label", lbl, "added with index", recognizer.labels.size() - 1);
+            faces.recognition.addLabel(lbl);
+            log(INFO, "Label", lbl, "added with index", faces.recognition.labels.size() - 1);
         }
         if (k == 'n') {
-            if (recognizer.currentLabel < recognizer.labels.size() - 1)
-                recognizer.currentLabel++;
+            if (faces.recognition.currentLabel < faces.recognition.labels.size() - 1)
+                faces.recognition.currentLabel++;
             else
-                recognizer.currentLabel = 0;
-            log(INFO, "Current label is", recognizer.currentLabel, "-",
-                recognizer.labels[recognizer.currentLabel]);
+                faces.recognition.currentLabel = 0;
+            log(INFO, "Current label is", faces.recognition.currentLabel, "-",
+                faces.recognition.labels[faces.recognition.currentLabel]);
         }
         if (k == 'p') {
-            if (recognizer.currentLabel > 0)
-                recognizer.currentLabel--;
+            if (faces.recognition.currentLabel > 0)
+                faces.recognition.currentLabel--;
             else
-                recognizer.currentLabel = recognizer.labels.size() - 1;
-            log(INFO, "Current label is", recognizer.currentLabel, "-",
-                recognizer.labels[recognizer.currentLabel]);
+                faces.recognition.currentLabel = faces.recognition.labels.size() - 1;
+            log(INFO, "Current label is", faces.recognition.currentLabel, "-",
+                faces.recognition.labels[faces.recognition.currentLabel]);
         }
         if (k == 's') {
-            if (!recognizer.labels.empty()) {
-                if (!recognizer.faces.empty()) {
-                    Mat f = frame(recognizer.faces[0].rect);
-                    string path = recognizer.addTrainImage(imgsDir, f);
-                    log(INFO, "Recognizer train image", recognizer.imgNum[recognizer.currentLabel],
+            if (!faces.recognition.labels.empty()) {
+                if (!faces.detector.faces.empty()) {
+                    Mat f = frame(faces.detector.faces[0].rect);
+                    string path = faces.recognition.addTrainImage(imgsDir, f);
+                    log(INFO, "Detector train image", faces.recognition.imgNum[faces.recognition.currentLabel],
                         "saved to", path);
                 } else log(ERROR, "There is no faces");
             } else log(ERROR, "Labels are empty! Press 'l' to add new");
         }
         if (k == 't') {
-            bool ok = recognizer.trainRecognizer(imgsList, modelFile);
+            bool ok = faces.recognition.train(imgsList, modelFile);
             if (ok)
                 log(INFO, "Model trained successful");
             else

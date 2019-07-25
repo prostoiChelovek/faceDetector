@@ -52,6 +52,7 @@ namespace Faces {
 
         // -1 -- not recognized
         // -2 -- label changed recently
+        // -3 -- label has not been set
         int getLabel() const;
 
         bool hasMoved() const;
@@ -61,7 +62,7 @@ namespace Faces {
         bool operator!=(const Face &f);
 
     private:
-        int label = -1;
+        int label = -3;
 
     };
 
