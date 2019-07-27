@@ -14,8 +14,8 @@ namespace Faces {
     Face *Detector::getLastFace(Face &now) {
         int minDist = -1;
         Face *r = nullptr;
-        for (auto &lastFace : lastFaces) {
-            Face *l = &lastFace;
+        for (int i = 0; i < lastFaces.size(); i++) {
+            Face *l = &lastFaces[i];
             int dist = getDist(l->rect.tl(), now.rect.tl())
                        + getDist(l->rect.br(), now.rect.br());
             if (dist < minDist && dist <= 50 || minDist == -1) {

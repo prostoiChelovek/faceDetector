@@ -18,16 +18,6 @@
 #include <opencv2/face.hpp>
 #include <opencv2/tracking.hpp>
 
-#ifdef USE_DLIB
-#include <dlib/dnn.h>
-#include <dlib/gui_widgets.h>
-#include <dlib/clustering.h>
-#include <dlib/image_io.h>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/opencv.h>
-#include <dlib/svm_threaded.h>
-#endif
-
 #include "utils.hpp"
 #include "Face.h"
 #include "Callbacks.hpp"
@@ -35,43 +25,42 @@
 
 namespace Faces {
 
-    bool normalizeImages(const std::string &filename, cv::Size faceSize, char separator = ';');
-
     class Recognizer {
     public:
-        cv::Ptr<cv::face::LBPHFaceRecognizer> model;
-
         int currentLabel = 0;
         std::vector<std::string> labels;
         std::map<int, int> imgNum;
 
-        cv::Size faceSize = cv::Size(200, 200);
+        cv::Size faceSize = cv::Size(150, 150);
 
         Callbacks *callbacks;
 
-        explicit Recognizer(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(200, 200));
+        bool ok = false;
+
+        explicit Recognizer(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(150, 150));
 
         ~Recognizer();
 
-        bool train(std::string imsList, std::string modelFile);
+        void operator()(Face &face);
 
-        bool operator()(std::vector<Face> &faces);
+        void operator()(std::vector<Face> &faces);
 
-        bool operator()(Face &face);
+        virtual void train(std::string samplesDir) = 0;
 
-        bool readModel(std::string file);
+        virtual bool save(std::string file) = 0;
+
+        virtual std::string addSample(std::string storage, Face &face) = 0;
+
+        virtual void setThreshold(double val) = 0;
 
         bool readLabels(std::string file);
 
-        bool readImageList(std::string file);
-
         void addLabel(std::string &label);
-
-        std::string addTrainImage(std::string imagesDir, cv::Mat &img);
 
     private:
         std::ofstream labelsFs;
-        std::ofstream imsListFs;
+
+        virtual void recognize(Face &face) = 0;
 
     };
 

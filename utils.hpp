@@ -9,15 +9,14 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <bits/stdc++.h>
 
 #include <opencv2/core.hpp>
 
 #ifdef USE_DLIB
-
-#include <dlib/clustering.h>
-#include <dlib/image_io.h>
 #include <dlib/opencv.h>
-
 #endif
 
 enum LogType {
@@ -121,6 +120,36 @@ inline bool read_csv(const std::string &filename, std::vector<cv::Mat> &images, 
 
 inline double getDist(cv::Point a, cv::Point b) {
     return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
+}
+
+inline std::vector<std::string> list_directory(const std::string &name, const std::string &ext = "") {
+    std::vector<std::string> v;
+    DIR *dirp = opendir(name.c_str());
+    struct dirent *dp;
+    while ((dp = readdir(dirp)) != nullptr) {
+        std::string n = dp->d_name;
+        if (!ext.empty() && n.find("." + ext) == std::string::npos)
+            continue;
+        else
+            v.push_back(n);
+    }
+    closedir(dirp);
+    return v;
+}
+
+inline bool createDirNotExists(const std::string &name) {
+    struct stat st{};
+    if (stat(name.c_str(), &st) == 0) {
+        if (st.st_mode & S_IFDIR != 0)
+            return false;
+    }
+
+    if (mkdir(name.c_str(), 0777) == -1) {
+        log(ERROR, "Cannot create directory", name, ":", strerror(errno));
+        return false;
+    }
+
+    return true;
 }
 
 #ifdef USE_DLIB

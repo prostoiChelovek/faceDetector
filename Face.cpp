@@ -35,6 +35,7 @@ namespace Faces {
     void Face::setLast(Face *f) {
         last = f;
         if (last != nullptr) {
+            label = last->getLabel();
             executedCallbacks = last->executedCallbacks;
             offset.x = rect.x - last->rect.x;
             offset.y = rect.y - last->rect.y;

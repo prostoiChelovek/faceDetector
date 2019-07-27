@@ -7,42 +7,52 @@
 namespace Faces {
 
     Faces::Faces(std::string configFile, std::string weightFile, std::string landmarksPredictor,
-                 std::string recognitionModel, std::string labelsList, std::string imagesList)
-            : detector(&callbacks, faceSize), recognition(&callbacks, faceSize) {
-        bool ok;
+                 std::string LBPH_model, std::string descriptorEstimator,
+                 std::string faceClassifiers, std::string labelsList, std::string imagesList)
+            : detector(&callbacks, faceSize) {
+        if (!LBPH_model.empty() && !descriptorEstimator.empty() && !faceClassifiers.empty()) {
+            log(ERROR, "You can use only one recognition method at a time");
+            ok = false;
+        }
+        if (LBPH_model.empty() && (descriptorEstimator.empty() || faceClassifiers.empty())) {
+            log(ERROR, "Select one of recognition methods and pass its parameters");
+            ok = false;
+        }
+
         if (!configFile.empty() && !weightFile.empty()) {
-            ok = detector.readNet(configFile, weightFile);
-            if (!ok)
-                throw "Cannot load face detection model from " + configFile + " amd " + weightFile;
+            if (!detector.readNet(configFile, weightFile)) {
+                log(ERROR, "Cannot load face detection model from", configFile, "amd", weightFile);
+                ok = false;
+            }
         }
-        if (!recognitionModel.empty()) {
-            ok = recognition.readModel(recognitionModel);
-            if (!ok)
-                throw "Cannot load face recognition model from " + recognitionModel;
+
+        if (!LBPH_model.empty()) {
+            recognition = new Recognizer_LBPH(&callbacks, faceSize, LBPH_model);
         }
+
 #ifdef USE_DLIB
+        if (!descriptorEstimator.empty() && !faceClassifiers.empty()) {
+            recognition = new Recognizer_Descriptors(&callbacks, faceSize, faceClassifiers, descriptorEstimator);
+        }
+
         if (!landmarksPredictor.empty()) {
-            ok = detector.readLandmarksPredictor((landmarksPredictor));
-            if (!ok)
-                throw "Cannot load landmarks predictor from " + landmarksPredictor;
+            if (!detector.readLandmarksPredictor((landmarksPredictor))) {
+                log(ERROR, "Cannot load landmarks predictor from", landmarksPredictor);
+                ok = false;
+            }
         }
 #endif
         if (!labelsList.empty()) {
-            ok = recognition.readLabels(labelsList);
-            if (!ok)
-                throw "Cannot read labels list from " + labelsList;
-        }
-        if (!imagesList.empty()) {
-            ok = recognition.readImageList(imagesList);
-            if (!ok)
-                throw "Cannot read images list from " + imagesList;
+            if (!recognition->readLabels(labelsList)) {
+                log(ERROR, "Cannot read labels list from", labelsList);
+                ok = false;
+            }
         }
     }
 
-    bool Faces::operator()(cv::Mat &img) {
-        bool ok = detector(img);
-        if (!ok) return false;
-        return recognition(detector.faces);
+    void Faces::operator()(cv::Mat &img) {
+        detector(img);
+        recognition->operator()(detector.faces);
     }
 
     void Faces::update() {
@@ -50,8 +60,6 @@ namespace Faces {
     }
 
     void Faces::draw(cv::Mat &img, bool displayAligned) {
-        cv::Scalar clr = cv::Scalar(0, 255, 0);
-
 #ifdef USE_DLIB
         // For aligned faces ->
         int max_vert = img.rows / faceSize.height;
@@ -65,6 +73,7 @@ namespace Faces {
 
         for (const Face &f : detector.faces) {
             // Color ->
+            cv::Scalar clr = cv::Scalar(0, 255, 0);
             if (f.getLabel() == -1)
                 clr = cv::Scalar(0, 0, 255);
             if (f.getLabel() == -2)
@@ -78,8 +87,8 @@ namespace Faces {
             // Label ->
             std::string text = std::to_string(f.confidence);
             if (f.getLabel() > -1) {
-                std::string label = f.getLabel() < recognition.labels.size()
-                                    ? recognition.labels[f.getLabel()] : "WTF";
+                std::string label = f.getLabel() < recognition->labels.size()
+                                    ? recognition->labels[f.getLabel()] : "WTF";
                 text += " - " + label;
             }
             std::for_each(text.begin(), text.end(),

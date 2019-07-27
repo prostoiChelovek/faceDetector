@@ -31,25 +31,32 @@
 
 #include "utils.hpp"
 #include "Detector.h"
-#include "Recognizer.h"
 #include "Face.h"
 #include "Callbacks.hpp"
+#include "Recognizer.h"
+#include "Recognizer_LBPH.h"
+#include "Recognizer_Descriptors.h"
 
 namespace Faces {
 
     class Faces {
     public:
-        cv::Size faceSize = cv::Size(200, 200);
+        cv::Size faceSize = cv::Size(150, 150);
 
         Callbacks callbacks;
         Detector detector;
-        Recognizer recognition;
+        Recognizer *recognition;
 
-        explicit Faces(std::string configFile = "", std::string weightFile = "",
-                       std::string landmarksPredictor = "", std::string recognitionModel = "",
+        bool ok = false;
+
+        // recognitionModel used in LBPH recognizer
+        // descriptorEstimator and faceClassifiers used in descriptor-based recognizer
+        Faces(std::string configFile, std::string weightFile,
+              std::string landmarksPredictor = "", std::string LBPH_model = "",
+              std::string descriptorEstimator = "", std::string faceClassifiers = "",
                        std::string labelsList = "", std::string imagesList = "");
 
-        bool operator()(cv::Mat &img);
+        void operator()(cv::Mat &img);
 
         void update();
 
