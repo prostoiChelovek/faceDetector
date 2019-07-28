@@ -8,7 +8,7 @@ namespace Faces {
 
     Faces::Faces(std::string configFile, std::string weightFile, std::string landmarksPredictor,
                  std::string LBPH_model, std::string descriptorEstimator,
-                 std::string faceClassifiers, std::string labelsList, std::string imagesList)
+                 std::string faceClassifiers, std::string labelsList)
             : detector(&callbacks, faceSize) {
         if (!LBPH_model.empty() && !descriptorEstimator.empty() && !faceClassifiers.empty()) {
             log(ERROR, "You can use only one recognition method at a time");
@@ -51,12 +51,21 @@ namespace Faces {
     }
 
     void Faces::operator()(cv::Mat &img) {
-        detector(img);
-        recognition->operator()(detector.faces);
+        if (detectionSkipped == detectFreq) {
+            detector(img);
+            detectionSkipped = 0;
+        } else detectionSkipped++;
+        if (recognitionSkipped == recognizeFreq) {
+            recognition->operator()(detector.faces);
+            recognitionSkipped = 0;
+        } else recognitionSkipped++;
     }
 
     void Faces::update() {
         detector.lastFaces = detector.faces;
+        for (Face &f : detector.lastFaces) {
+            f.last = nullptr;
+        }
     }
 
     void Faces::draw(cv::Mat &img, bool displayAligned) {

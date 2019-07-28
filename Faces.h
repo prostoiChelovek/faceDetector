@@ -47,14 +47,17 @@ namespace Faces {
         Detector detector;
         Recognizer *recognition;
 
-        bool ok = false;
+        bool ok = true;
+
+        int detectFreq = 1;
+        int recognizeFreq = 1;
 
         // recognitionModel used in LBPH recognizer
         // descriptorEstimator and faceClassifiers used in descriptor-based recognizer
         Faces(std::string configFile, std::string weightFile,
               std::string landmarksPredictor = "", std::string LBPH_model = "",
               std::string descriptorEstimator = "", std::string faceClassifiers = "",
-                       std::string labelsList = "", std::string imagesList = "");
+              std::string labelsList = "");
 
         void operator()(cv::Mat &img);
 
@@ -62,6 +65,9 @@ namespace Faces {
 
         void draw(cv::Mat &img, bool displayAligned = true);
 
+    private:
+        int detectionSkipped = 0;
+        int recognitionSkipped = 0;
     };
 
 }

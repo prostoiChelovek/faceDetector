@@ -20,7 +20,6 @@ const string configFile = "../models/deploy.prototxt";
 const string weightFile = "../models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
 
 string samplesDir = "../samples";
-string imgsList = "../faces.csv";
 string labelsFile = "../labels.txt";
 
 string modelFile = "../model.yml";
@@ -38,7 +37,10 @@ int main(int argc, const char **argv) {
 
     Faces::Faces faces(configFile, weightFile, lmsPredictorFile, "",
                        descriptorsNetFIle, faceClassifiersFile,
-                       labelsFile, imgsList);
+                       labelsFile);
+
+    faces.detectFreq = 3;
+    faces.recognizeFreq = 9;
 
     // Callbacks ->
 
@@ -79,8 +81,15 @@ int main(int argc, const char **argv) {
 
     Mat img, frame;
 
-    double tt_opencvDNN = 0;
-    double fpsOpencvDNN = 0;
+    int nFrames = 0;
+    int fps = 0;
+    thread([&]() {
+        while (true) {
+            fps = nFrames;
+            nFrames = 0;
+            this_thread::sleep_for(chrono::seconds(1));
+        }
+    }).detach();
 
     bool shouldRecDir = false;
     while (source.isOpened()) {
@@ -88,18 +97,16 @@ int main(int argc, const char **argv) {
         if (frame.empty())
             break;
         frame.copyTo(img);
-        double t = getTickCount();
 
         faces(frame);
 
         faces.draw(img);
-        tt_opencvDNN = ((double) getTickCount() - t) / getTickFrequency();
-        fpsOpencvDNN = 1 / tt_opencvDNN;
-        putText(img, format("FPS = %.2f", fpsOpencvDNN), Point(5, 25), FONT_HERSHEY_SIMPLEX, 0.8,
+        putText(img, format("FPS = %i", fps), Point(5, 25), FONT_HERSHEY_SIMPLEX, 0.8,
                 Scalar(0, 0, 255), 2);
         imshow("Face Detection", img);
 
         faces.update();
+        nFrames++;
 
         int k = waitKey(1);
         if (k == 'l') {

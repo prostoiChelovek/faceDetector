@@ -34,6 +34,9 @@ namespace Faces {
         const static int minLabelNotChanged = 5;
         long labelNotChanged = 0; // number of consecutive label recognitions
 
+        // in most cases use getLabel instated
+        int label = -3;
+
         Face *last = nullptr;
 
         std::map<std::string, int> executedCallbacks;
@@ -67,10 +70,6 @@ namespace Faces {
         bool operator==(const Face &f);
 
         bool operator!=(const Face &f);
-
-    private:
-        int label = -3;
-
     };
 
 }
