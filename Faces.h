@@ -45,7 +45,7 @@ namespace Faces {
 
         Callbacks callbacks;
         Detector detector;
-        Recognizer *recognition;
+        Recognizer *recognition = nullptr;
 
         bool ok = true;
 

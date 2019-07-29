@@ -41,7 +41,19 @@ namespace Faces {
                 ok = false;
             }
         }
+#else
+        if (!descriptorEstimator.empty() || !faceClassifiers.empty()) {
+            log(WARNING, "DLIB support disabled, so you cannot use face descriptors");
+        }
+        if (!landmarksPredictor.empty()) {
+            log(WARNING, "DLIB support disabled, so you cannot use landmarks and face alignment");
+        }
 #endif
+        if (recognition == nullptr) {
+            ok = false;
+            throw "Cannot create face recognizer";
+        }
+
         if (!labelsList.empty()) {
             if (!recognition->readLabels(labelsList)) {
                 log(ERROR, "Cannot read labels list from", labelsList);
