@@ -2,8 +2,8 @@
 // Created by prostoichelovek on 06.06.19.
 //
 
-#ifndef VIDEOTRANS_UTILS_HPP
-#define VIDEOTRANS_UTILS_HPP
+#ifndef FACES_UTILS_HPP
+#define FACES_UTILS_HPP
 
 #include <iostream>
 #include <string>
@@ -168,4 +168,4 @@ cv::Mat dlibMatrix2cvMat(dlib::matrix<T> matr) {
 
 #endif
 
-#endif //VIDEOTRANS_UTILS_HPP
+#endif //FACES_UTILS_HPP
