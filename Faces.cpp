@@ -8,8 +8,9 @@ namespace Faces {
 
     Faces::Faces(std::string configFile, std::string weightFile, std::string landmarksPredictor,
                  std::string LBPH_model, std::string descriptorEstimator,
-                 std::string faceClassifiers, std::string labelsList)
-            : detector(&callbacks, faceSize) {
+                 std::string faceClassifiers, std::string faceHistVal,
+                 std::string labelsList)
+            : detector(&callbacks, faceSize), checker(faceHistVal) {
         if (!LBPH_model.empty() && !descriptorEstimator.empty() && !faceClassifiers.empty()) {
             log(ERROR, "You can use only one recognition method at a time");
             ok = false;
@@ -54,6 +55,10 @@ namespace Faces {
             throw "Cannot create face recognizer";
         }
 
+        if (!faceHistVal.empty() && !checker.ok) {
+            log(WARNING, "Cannot initialize face checker with classifier path", faceHistVal);
+        }
+
         if (!labelsList.empty()) {
             if (!recognition->readLabels(labelsList)) {
                 log(ERROR, "Cannot read labels list from", labelsList);
@@ -71,6 +76,17 @@ namespace Faces {
             recognition->operator()(detector.faces);
             recognitionSkipped = 0;
         } else recognitionSkipped++;
+    }
+
+    void Faces::operator()(cv::Mat &img, cv::Mat &disp) {
+        operator()(img);
+        for (Face &f : detector.faces) {
+            cv::Mat faceDisp = disp(f.rect);
+            cv::resize(faceDisp, faceDisp, faceSize);
+            bool real = checker.check(faceDisp);
+            if (!real)
+                f.setLabel(-4);
+        }
     }
 
     void Faces::update() {
@@ -101,6 +117,8 @@ namespace Faces {
                 clr = cv::Scalar(0, 125, 255);
             if (f.getLabel() == -3)
                 clr = cv::Scalar(255, 0, 0);
+            if (f.getLabel() == -4)
+                clr = cv::Scalar(255, 0, 255);
             // <- Color
 
             cv::rectangle(img, f.rect, clr, 2, 4);

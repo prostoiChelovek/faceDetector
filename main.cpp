@@ -28,6 +28,8 @@ string lmsPredictorFile = "../models/shape_predictor_5_face_landmarks.dat";
 string descriptorsNetFIle = "../models/dlib_face_recognition_resnet_model_v1.dat";
 string faceClassifiersFile = "../classifiers.dat";
 
+string histValidator = "../faceHistCHecker.yml";
+
 int main(int argc, const char **argv) {
     VideoCapture source;
     if (argc == 1)
@@ -36,7 +38,7 @@ int main(int argc, const char **argv) {
         source.open(stoi(argv[1]));
 
     Faces::Faces faces(configFile, weightFile, lmsPredictorFile, "",
-                       descriptorsNetFIle, faceClassifiersFile,
+                       descriptorsNetFIle, faceClassifiersFile, histValidator,
                        labelsFile);
 
     faces.detectFreq = 3;

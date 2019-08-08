@@ -33,6 +33,7 @@
 #include "Recognizer.h"
 #include "Recognizer_LBPH.h"
 #include "Recognizer_Descriptors.h"
+#include "FaceChecker.h"
 
 namespace Faces {
 
@@ -43,6 +44,7 @@ namespace Faces {
         Callbacks callbacks;
         Detector detector;
         Recognizer *recognition = nullptr;
+        FaceChecker checker;
 
         bool ok = true;
 
@@ -51,12 +53,15 @@ namespace Faces {
 
         // recognitionModel used in LBPH recognizer
         // descriptorEstimator and faceClassifiers used in descriptor-based recognizer
+        // faceHistVal SVM for face checker
         Faces(std::string configFile, std::string weightFile,
               std::string landmarksPredictor = "", std::string LBPH_model = "",
               std::string descriptorEstimator = "", std::string faceClassifiers = "",
-              std::string labelsList = "");
+              std::string faceHistVal = "", std::string labelsList = "");
 
         void operator()(cv::Mat &img);
+
+        void operator()(cv::Mat &img, cv::Mat &disp);
 
         void update();
 

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <map>
 #include <sys/stat.h>
@@ -100,24 +101,34 @@ inline bool getFileContent(const std::string &fileName, std::vector<std::string>
     return true;
 }
 
-inline bool read_csv(const std::string &filename, std::vector<cv::Mat> &images, std::vector<int> &labels,
-                     char separator = ';') {
+template<typename T>
+inline std::vector<std::vector<T>> read_csv(const std::string &filename,
+                                            char separator = ',') {
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file) {
-        std::cerr << "No valid input file was given, please check the given filename." << std::endl;
-        return false;
+        log(ERROR, "Cannot open CSV file", filename);
+        return std::vector<std::vector<int>>{};
     }
-    std::string line, path, classlabel;
+
+    std::vector<std::vector<T>> res;
+
+    std::string line;
+
     while (getline(file, line)) {
-        std::stringstream liness(line);
-        getline(liness, path, separator);
-        getline(liness, classlabel);
-        if (!path.empty() && !classlabel.empty()) {
-            images.push_back(cv::imread(path, 0));
-            labels.push_back(atoi(classlabel.c_str()));
+        std::vector<T> ln;
+        std::vector<std::string> vals = split(line, std::string(1, separator));
+        for (std::string &v : vals) {
+            std::stringstream ss(v);
+            T val;
+            ss >> val;
+            if (ss.fail())
+                log(ERROR, "Cannot convert '", ss.str(), "' to required type while reading csv file", filename);
+            ln.emplace_back(val);
         }
+        res.emplace_back(ln);
     }
-    return labels.size() == images.size();
+
+    return res;
 }
 
 inline double getDist(cv::Point a, cv::Point b) {
@@ -159,6 +170,17 @@ static void rotatedRect(cv::Mat &img, const cv::RotatedRect &rect, const cv::Sca
     rect.points(vertices);
     for (int i = 0; i < 4; i++)
         cv::line(img, vertices[i], vertices[(i + 1) % 4], color, 2);
+}
+
+template<typename _Tp>
+static cv::Mat toMat(const std::vector<std::vector<_Tp> > vecIn) {
+    cv::Mat_<_Tp> matOut(vecIn.size(), vecIn.at(0).size());
+    for (int i = 0; i < matOut.rows; ++i) {
+        for (int j = 0; j < matOut.cols; ++j) {
+            matOut(i, j) = vecIn.at(i).at(j);
+        }
+    }
+    return matOut;
 }
 
 #ifdef USE_DLIB

@@ -63,6 +63,7 @@ namespace Faces {
         // -1 -- not recognized
         // -2 -- label changed recently
         // -3 -- label has not been set
+        // -4 -- face is fake
         int getLabel() const;
 
         bool hasMoved() const;
