@@ -104,6 +104,7 @@ namespace Faces {
             // <- Color
 
             cv::rectangle(img, f.rect, clr, 2, 4);
+//            rotatedRect(img, f.rect_normalized, clr);
 
             // Label ->
             std::string text = std::to_string(f.confidence);

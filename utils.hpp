@@ -16,7 +16,9 @@
 #include <opencv2/core.hpp>
 
 #ifdef USE_DLIB
+
 #include <dlib/opencv.h>
+
 #endif
 
 enum LogType {
@@ -152,10 +154,21 @@ inline bool createDirNotExists(const std::string &name) {
     return true;
 }
 
+static void rotatedRect(cv::Mat &img, const cv::RotatedRect &rect, const cv::Scalar &color) {
+    cv::Point2f vertices[4];
+    rect.points(vertices);
+    for (int i = 0; i < 4; i++)
+        cv::line(img, vertices[i], vertices[(i + 1) % 4], color, 2);
+}
+
 #ifdef USE_DLIB
 
 static dlib::rectangle openCVRectToDlib(const cv::Rect &r) {
     return dlib::rectangle((long) r.tl().x, (long) r.tl().y, (long) r.br().x - 1, (long) r.br().y - 1);
+}
+
+static cv::Rect dlibRect2cv(dlib::rectangle r) {
+    return cv::Rect(cv::Point2i(r.left(), r.top()), cv::Point2i(r.right() + 1, r.bottom() + 1));
 }
 
 template<typename T>

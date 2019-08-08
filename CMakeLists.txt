@@ -7,7 +7,7 @@ set(DLIB_PATH $ENV{HOME}/dlib)
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Threads REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 set(SOURCE_FILES Detector.cpp Detector.h utils.hpp Face.cpp Face.h Callbacks.hpp Recognizer.cpp Recognizer.h Faces.cpp Faces.h MyClassifier.hpp RecognitionNet.hpp Recognizer_LBPH.cpp Recognizer_LBPH.h Recognizer_Descriptors.cpp Recognizer_Descriptors.h)
 add_library(faces STATIC ${SOURCE_FILES})

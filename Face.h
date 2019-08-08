@@ -16,12 +16,15 @@
 #include <opencv2/face.hpp>
 
 #include "MyClassifier.hpp"
+#include "utils.hpp"
 
 namespace Faces {
 
     class Face {
     public:
         cv::Rect rect;
+
+        cv::RotatedRect rect_normalized;
 
         int confidence = 0;
 

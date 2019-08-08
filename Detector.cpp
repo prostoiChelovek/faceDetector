@@ -55,7 +55,16 @@ namespace Faces {
             dlib::full_object_detection shape = landmarksPredictor(dImg, face);
 
             dlib::matrix<dlib::rgb_pixel> face_chip;
-            dlib::extract_image_chip(dImg, get_face_chip_details(shape, faceSize.width, 0.25), face_chip);
+            dlib::chip_details face_chip_det = get_face_chip_details(shape, faceSize.width, 0.25);
+            dlib::extract_image_chip(dImg, face_chip_det, face_chip);
+
+            cv::Rect rectNormalized = dlibRect2cv(face_chip_det.rect);
+            cv::Point rectNormCenter(rectNormalized.x + (rectNormalized.width / 2),
+                                     rectNormalized.y + (rectNormalized.height / 2));
+            double angleDegree = face_chip_det.angle * 180 / CV_PI;
+            faces[i].rect_normalized = cv::RotatedRect(rectNormCenter,
+                                                       rectNormalized.size(),
+                                                       angleDegree);
 
             for (int j = 0; j < shape.num_parts(); j++) {
                 dlib::point pt = shape.part(j);
