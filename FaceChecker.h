@@ -34,6 +34,8 @@ namespace Faces {
         classifier_type classifier;
         std::string classifierPath;
 
+        double threshold = 0.1;
+
         bool ok = false;
 
         explicit FaceChecker(std::string classifierPath);

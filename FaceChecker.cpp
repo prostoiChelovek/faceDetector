@@ -94,11 +94,11 @@ namespace Faces {
     bool FaceChecker::load() {
         try {
             dlib::deserialize(classifierPath) >> classifier;
+            return true;
         } catch (dlib::serialization_error &e) {
             log(ERROR, "Cannot load face histogram validator from", classifierPath, ":", e.what());
             return false;
         }
-        return false;
     }
 
     bool FaceChecker::check(cv::Mat &faceDisp) {
@@ -110,9 +110,7 @@ namespace Faces {
         sample_type histMatr = dlib::mat(histVec);
 
         double prediction = classifier(histMatr);
-
-        log(INFO, prediction);
-        return prediction == 1;
+        return prediction > threshold;
     }
 
 
