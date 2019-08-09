@@ -28,7 +28,7 @@ string lmsPredictorFile = "../models/shape_predictor_5_face_landmarks.dat";
 string descriptorsNetFIle = "../models/dlib_face_recognition_resnet_model_v1.dat";
 string faceClassifiersFile = "../classifiers.dat";
 
-string histValidator = "../faceHistCHecker.yml";
+string histValidator = "../faceHistCHecker.dat";
 
 int main(int argc, const char **argv) {
     VideoCapture source;
@@ -151,6 +151,14 @@ int main(int argc, const char **argv) {
         if (k == 'd') {
             shouldRecDir = !shouldRecDir;
             log(INFO, "Should", (shouldRecDir ? "" : " not"), "recognize faces` directions");
+        }
+        if (k == 'f') {
+            Mat disp = imread("../faceDisp.png", IMREAD_GRAYSCALE);
+            Mat disp2 = imread("../faceDisp2.png", IMREAD_GRAYSCALE);
+            faces.checker.train(samplesDir);
+            faces.checker.save();
+            faces.checker.check(disp);
+            faces.checker.check(disp2);
         }
         if (k == 27) {
             destroyAllWindows();

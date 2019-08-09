@@ -107,7 +107,7 @@ inline std::vector<std::vector<T>> read_csv(const std::string &filename,
     std::ifstream file(filename.c_str(), std::ifstream::in);
     if (!file) {
         log(ERROR, "Cannot open CSV file", filename);
-        return std::vector<std::vector<int>>{};
+        return std::vector<std::vector<T>>{};
     }
 
     std::vector<std::vector<T>> res;

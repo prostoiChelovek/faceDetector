@@ -5,6 +5,8 @@
 #ifndef FACES_FACECHECKER_H
 #define FACES_FACECHECKER_H
 
+#ifdef USE_DLIB
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -15,6 +17,8 @@
 #include <opencv2/face.hpp>
 #include <opencv2/ml.hpp>
 
+#include <dlib/svm.h>
+
 #include "Face.h"
 #include "utils.hpp"
 
@@ -22,16 +26,21 @@ namespace Faces {
 
     class FaceChecker {
     public:
-        cv::Ptr<cv::ml::SVM> classifier;
+        typedef dlib::matrix<double, 256, 1> sample_type;
+        typedef dlib::histogram_intersection_kernel<sample_type> kernel_type;
+        typedef dlib::svm_c_trainer<kernel_type> trainer_type;
+        typedef dlib::decision_function<kernel_type> classifier_type;
+
+        classifier_type classifier;
         std::string classifierPath;
 
         bool ok = false;
 
         explicit FaceChecker(std::string classifierPath);
 
-        bool check(cv::Mat &faceDisp);
+        FaceChecker() = default;
 
-        void create();
+        bool check(cv::Mat &faceDisp);
 
         void addTrainSample(cv::Mat &faceDisp, std::string dir, bool isReal);
 
@@ -47,5 +56,7 @@ namespace Faces {
     };
 
 }
+
+#endif
 
 #endif //FACES_FACECHECKER_H

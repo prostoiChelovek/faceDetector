@@ -11,13 +11,6 @@ namespace Faces {
         ok = load();
     }
 
-    void FaceChecker::create() {
-        classifier = cv::ml::SVM::create();
-        classifier->setType(cv::ml::SVM::C_SVC);
-        classifier->setKernel(cv::ml::SVM::LINEAR);
-        classifier->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
-    }
-
     void FaceChecker::addTrainSample(cv::Mat &faceDisp, std::string dir, bool isReal) {
         createDirNotExists(dir);
 
@@ -40,37 +33,41 @@ namespace Faces {
     }
 
     void FaceChecker::train(std::string samplesDir) {
-        std::vector<std::vector<int>> trueHists = read_csv<int>(samplesDir + "/real.csv");
+        std::vector<std::vector<double>> trueHists = read_csv<double>(samplesDir + "/real.csv");
         if (trueHists.empty()) {
             log(ERROR, "Cannot read true samples from", samplesDir + "/real.csv");
             return;
         }
 
-        std::vector<std::vector<int>> fakeHists = read_csv<int>(samplesDir + "/fake.csv");
+        std::vector<std::vector<double>> fakeHists = read_csv<double>(samplesDir + "/fake.csv");
         if (trueHists.empty()) {
             log(ERROR, "Cannot read fake samples from", samplesDir + "/fake.csv");
             return;
         }
 
-        std::vector<std::vector<int>> trainingData;
+        std::vector<std::vector<double>> trainingData;
         trainingData.insert(trainingData.end(), trueHists.begin(), trueHists.end());
         trainingData.insert(trainingData.end(), fakeHists.begin(), fakeHists.end());
 
-        std::vector<int> trainingLabels;
+        std::vector<double> trainingLabels;
         std::for_each(trueHists.begin(), trueHists.end(), [&](const auto &e) {
-            trainingLabels.emplace_back(1);
+            trainingLabels.emplace_back(+1);
         });
         std::for_each(fakeHists.begin(), fakeHists.end(), [&](const auto &e) {
             trainingLabels.emplace_back(-1);
         });
 
-        cv::Mat trainingDataMat = toMat(trainingData);
-        trainingDataMat.convertTo(trainingDataMat, CV_32F);
-        cv::Mat trainingLabelsMat(trainingLabels.size(), 1, CV_32SC1, trainingLabels.data());
+        std::vector<sample_type> samples;
+        std::for_each(trainingData.begin(), trainingData.end(), [&](const auto &data) {
+            samples.emplace_back(dlib::mat(data));
+        });
 
-        if (!ok)
-            create();
-        ok = classifier->train(trainingDataMat, cv::ml::ROW_SAMPLE, trainingLabelsMat);
+        trainer_type trainer;
+        trainer.set_kernel(kernel_type());
+        trainer.set_c(10);
+
+        classifier = trainer.train(samples, trainingLabels);
+        ok = true;
     }
 
     cv::Mat FaceChecker::calculateHist(cv::Mat faceDisp) {
@@ -87,18 +84,17 @@ namespace Faces {
     void FaceChecker::save() {
         if (!ok)
             return;
-        classifier->save(classifierPath);
+        try {
+            dlib::serialize(classifierPath) << classifier;
+        } catch (dlib::serialization_error &e) {
+            log(ERROR, "Cannot save face histogram validator to", classifierPath, ":", e.what());
+        }
     }
 
     bool FaceChecker::load() {
         try {
-            classifier = cv::ml::SVM::load(classifierPath);
-            if (classifier->empty()) {
-                log(ERROR, "Cannot load face histogram validator from", classifierPath);
-            } else {
-                return true;
-            }
-        } catch (std::exception &e) {
+            dlib::deserialize(classifierPath) >> classifier;
+        } catch (dlib::serialization_error &e) {
             log(ERROR, "Cannot load face histogram validator from", classifierPath, ":", e.what());
             return false;
         }
@@ -110,9 +106,10 @@ namespace Faces {
             return true;
 
         cv::Mat hist = calculateHist(faceDisp);
-        hist.convertTo(hist, CV_32F);
-        hist = hist.t();
-        float prediction = classifier->predict(hist);
+        std::vector<double> histVec = hist;
+        sample_type histMatr = dlib::mat(histVec);
+
+        double prediction = classifier(histMatr);
 
         log(INFO, prediction);
         return prediction == 1;

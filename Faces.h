@@ -44,7 +44,9 @@ namespace Faces {
         Callbacks callbacks;
         Detector detector;
         Recognizer *recognition = nullptr;
+#ifdef USE_DLIB
         FaceChecker checker;
+#endif
 
         bool ok = true;
 
@@ -61,7 +63,10 @@ namespace Faces {
 
         void operator()(cv::Mat &img);
 
+#ifdef USE_DLIB
         void operator()(cv::Mat &img, cv::Mat &disp);
+
+#endif
 
         void update();
 

@@ -10,7 +10,7 @@ namespace Faces {
                  std::string LBPH_model, std::string descriptorEstimator,
                  std::string faceClassifiers, std::string faceHistVal,
                  std::string labelsList)
-            : detector(&callbacks, faceSize), checker(faceHistVal) {
+            : detector(&callbacks, faceSize) {
         if (!LBPH_model.empty() && !descriptorEstimator.empty() && !faceClassifiers.empty()) {
             log(ERROR, "You can use only one recognition method at a time");
             ok = false;
@@ -42,6 +42,13 @@ namespace Faces {
                 ok = false;
             }
         }
+
+        if (!faceHistVal.empty()) {
+            checker = FaceChecker(faceHistVal);
+            if (!checker.ok) {
+                log(WARNING, "Cannot initialize face checker with classifier path", faceHistVal);
+            }
+        }
 #else
         if (!descriptorEstimator.empty() || !faceClassifiers.empty()) {
             log(WARNING, "DLIB support disabled, so you cannot use face descriptors");
@@ -49,14 +56,13 @@ namespace Faces {
         if (!landmarksPredictor.empty()) {
             log(WARNING, "DLIB support disabled, so you cannot use landmarks and face alignment");
         }
+        if (!faceHistVal.empty()) {
+            log(WARNING, "DLIB support disabled, so you cannot use face checker");
+        }
 #endif
         if (recognition == nullptr) {
             ok = false;
             throw "Cannot create face recognizer";
-        }
-
-        if (!faceHistVal.empty() && !checker.ok) {
-            log(WARNING, "Cannot initialize face checker with classifier path", faceHistVal);
         }
 
         if (!labelsList.empty()) {
@@ -78,6 +84,7 @@ namespace Faces {
         } else recognitionSkipped++;
     }
 
+#ifdef USE_DLIB
     void Faces::operator()(cv::Mat &img, cv::Mat &disp) {
         operator()(img);
         for (Face &f : detector.faces) {
@@ -88,6 +95,8 @@ namespace Faces {
                 f.setLabel(-4);
         }
     }
+
+#endif
 
     void Faces::update() {
         detector.lastFaces = detector.faces;
