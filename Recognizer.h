@@ -28,6 +28,8 @@ namespace Faces {
 
         cv::Size faceSize = cv::Size(150, 150);
 
+        int minLabelNotChanged = 5;
+
         Callbacks *callbacks;
 
         bool ok = false;

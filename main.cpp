@@ -42,6 +42,7 @@ int main(int argc, const char **argv) {
                        labelsFile);
 
     faces.detectFreq = 3;
+    faces.recognition->minLabelNotChanged = 6;
     faces.recognizeFreq = 9;
 
     // Callbacks ->
@@ -100,7 +101,7 @@ int main(int argc, const char **argv) {
             break;
         frame.copyTo(img);
 
-        faces(frame);
+        faces(img);
 
         faces.draw(img);
         putText(img, format("FPS = %i", fps), Point(5, 25), FONT_HERSHEY_SIMPLEX, 0.8,

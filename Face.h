@@ -31,7 +31,7 @@ namespace Faces {
         const static int minOffset = 5;
         cv::Point offset; // distance between current position and last
 
-        const static int minLabelNotChanged = 5;
+        int minLabelNotChanged = 5;
         long labelNotChanged = 0; // number of consecutive label recognitions
 
         // in most cases use getLabel instated

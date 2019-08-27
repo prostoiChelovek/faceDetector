@@ -183,6 +183,52 @@ static cv::Mat toMat(const std::vector<std::vector<_Tp> > vecIn) {
     return matOut;
 }
 
+static cv::Rect boundingBox(std::vector<cv::Rect> rects) {
+    cv::Rect res(-1, -1, -1, -1);
+
+    for (cv::Rect &r : rects) {
+        if (res.x < r.x)
+            res.x = r.x;
+        if (res.y < r.y)
+            res.y = r.y;
+        if (res.width + res.x < r.x + r.width)
+            res.width = r.x + r.width - res.x;
+        if (res.height + res.y < r.y + r.height)
+            res.height = r.y + r.height - res.y;
+    }
+
+    return res;
+}
+
+static bool fixROI(cv::Rect &rect, const cv::Size &roi) {
+    bool ok = true;
+    if (rect.width <= 0) {
+        ok = false;
+        rect.width = roi.width;
+    }
+    if (rect.height <= 0) {
+        ok = false;
+        rect.height = roi.height;
+    }
+    if (rect.x < 0) rect.x = 0;
+    if (rect.y < 0) rect.y = 0;
+    if (rect.x >= roi.width)
+        rect.x = roi.width - rect.width;
+    if (rect.y >= roi.height)
+        rect.y = roi.height - rect.height;
+    if (rect.x + rect.width > roi.width)
+        rect.width = roi.width - rect.x;
+    if (rect.y + rect.height > roi.height)
+        rect.height = roi.height - rect.y;
+    if (rect.width > roi.width)
+        rect.width = roi.width;
+    if (rect.height > roi.height)
+        rect.height = roi.height;
+    if (rect.x < 0) rect.x = 0;
+    if (rect.y < 0) rect.y = 0;
+    return ok;
+}
+
 #ifdef USE_DLIB
 
 static dlib::rectangle openCVRectToDlib(const cv::Rect &r) {

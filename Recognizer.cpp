@@ -25,6 +25,7 @@ namespace Faces {
     }
 
     void Recognizer::operator()(Face &face) {
+        face.minLabelNotChanged = minLabelNotChanged;
         recognize(face);
 
         if (callbacks != nullptr) {
@@ -32,8 +33,11 @@ namespace Faces {
                 callbacks->call("faceRecognized", &face);
             if (face.getLabel() == -1)
                 callbacks->call("unknownFace", &face);
-            if (face.getLabel() != -2 && face.last->getLabel() == -2)
-                callbacks->call("labelConfirmed", &face);
+            if (face.getLabel() != -2 && face.last != nullptr) {
+                if (face.last->getLabel() == -2) {
+                    callbacks->call("labelConfirmed", &face);
+                }
+            }
         }
     }
 

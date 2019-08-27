@@ -54,7 +54,7 @@ namespace Faces {
     }
 
     int Face::getLabel() const {
-        if (label == -3)
+        if (label <= -3)
             return label;
         if (labelNotChanged >= minLabelNotChanged)
             return label;
