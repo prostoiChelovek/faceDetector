@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Threads REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 
-set(SOURCE_FILES Detector.cpp Detector.h utils.hpp Face.cpp Face.h Callbacks.hpp Recognizer.cpp Recognizer.h Faces.cpp Faces.h MyClassifier.hpp RecognitionNet.hpp Recognizer_LBPH.cpp Recognizer_LBPH.h Recognizer_Descriptors.cpp Recognizer_Descriptors.h FaceChecker.cpp FaceChecker.h)
+set(SOURCE_FILES Detection/Detection.cpp Detection/Detection.h utils.hpp Face/Face.cpp Face/Face.h Callbacks.hpp Recognition/recognition.cpp Recognition/recognition.h Faces.cpp Faces.h Recognition/MyClassifier.hpp Recognition/RecognitionNet.hpp Recognition/LBPH.cpp Recognition/LBPH.h Recognition/Descriptors.cpp Recognition/Descriptors.h FaceChecker.cpp FaceChecker.h)
 add_library(faces STATIC ${SOURCE_FILES})
 
 target_link_libraries(faces ${CMAKE_THREAD_LIBS_INIT})

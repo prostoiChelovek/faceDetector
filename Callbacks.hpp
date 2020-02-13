@@ -13,7 +13,7 @@
 #include <memory>
 #include <map>
 
-#include "Face.h"
+#include "Face/Face.h"
 
 namespace Faces {
 

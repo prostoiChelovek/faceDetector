@@ -16,19 +16,21 @@ using namespace std;
 using namespace cv::dnn;
 using namespace cv::face;
 
-const string configFile = "../models/deploy.prototxt";
-const string weightFile = "../models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
+const string data_dir = "../data";
 
-string samplesDir = "../samples";
-string labelsFile = "../labels.txt";
+const string configFile = data_dir + "/models/deploy.prototxt";
+const string weightFile = data_dir + "/models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
 
-string modelFile = "../model.yml";
+string samplesDir = data_dir + "/samples";
+string labelsFile = data_dir + "/labels.txt";
 
-string lmsPredictorFile = "../models/shape_predictor_5_face_landmarks.dat";
-string descriptorsNetFIle = "../models/dlib_face_recognition_resnet_model_v1.dat";
-string faceClassifiersFile = "../classifiers.dat";
+string modelFile = data_dir + "/model.yml";
 
-string histValidator = "../faceHistCHecker.dat";
+string lmsPredictorFile = data_dir + "/models/shape_predictor_5_face_landmarks.dat";
+string descriptorsNetFIle = data_dir + "/models/dlib_face_recognition_resnet_model_v1.dat";
+string faceClassifiersFile = data_dir + "/classifiers.dat";
+
+string histValidator = data_dir + "/faceHistCHecker.dat";
 
 int main(int argc, const char **argv) {
     VideoCapture source;
@@ -72,15 +74,15 @@ int main(int argc, const char **argv) {
     namedWindow("Face Detection");
     int detectTh = 70;
     auto detectThCb = [](int pos, void *data) {
-        static_cast<Faces::Detector *>(data)->confidenceThreshold = float(pos) / 100;
+        static_cast<Faces::Detection *>(data)->confidenceThreshold = float(pos) / 100;
     };
     createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &faces.detector);
     int recTh = 30;
     faces.recognition->setThreshold(double(recTh) / 100.0);
     auto recThCb = [](int pos, void *data) {
-        static_cast<Faces::Recognizer *>(data)->setThreshold(double(pos) / 100.0);
+        static_cast<Faces::Recognition::recognition *>(data)->setThreshold(double(pos) / 100.0);
     };
-    createTrackbar("Recognition thresh", "Face Detection", &recTh, 200, recThCb, faces.recognition);
+    createTrackbar("recognition thresh", "Face Detection", &recTh, 200, recThCb, faces.recognition);
 
     Mat img, frame;
 
@@ -139,7 +141,7 @@ int main(int argc, const char **argv) {
             if (!faces.recognition->labels.empty()) {
                 if (!faces.detector.faces.empty()) {
                     string path = faces.recognition->addSample(samplesDir, faces.detector.faces[0]);
-                    log(INFO, "Detector train image", faces.recognition->imgNum[faces.recognition->currentLabel],
+                    log(INFO, "Detection train image", faces.recognition->imgNum[faces.recognition->currentLabel],
                         "saved to", path);
                 } else log(ERROR, "There is no faces");
             } else log(ERROR, "Labels are empty! Press 'l' to add new");
@@ -147,15 +149,15 @@ int main(int argc, const char **argv) {
         if (k == 't') {
             faces.recognition->train(samplesDir);
             faces.recognition->save(faceClassifiersFile);
-            log(INFO, "Recognition model trained");
+            log(INFO, "recognition model trained");
         }
         if (k == 'd') {
             shouldRecDir = !shouldRecDir;
             log(INFO, "Should", (shouldRecDir ? "" : " not"), "recognize faces` directions");
         }
         if (k == 'f') {
-            Mat disp = imread("../faceDisp.png", IMREAD_GRAYSCALE);
-            Mat disp2 = imread("../faceDisp2.png", IMREAD_GRAYSCALE);
+            Mat disp = imread(data_dir + "/faceDisp.png", IMREAD_GRAYSCALE);
+            Mat disp2 = imread(data_dir + "/faceDisp2.png", IMREAD_GRAYSCALE);
             faces.checker.train(samplesDir);
             faces.checker.save();
             faces.checker.check(disp);

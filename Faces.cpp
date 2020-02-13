@@ -28,11 +28,11 @@ namespace Faces {
         }
 
         if (!LBPH_model.empty()) {
-            recognition = new Recognizer_LBPH(&callbacks, faceSize, LBPH_model);
+            recognition = new Recognition::LBPH(&callbacks, faceSize, LBPH_model);
         }
 
         if (!descriptorEstimator.empty() && !faceClassifiers.empty()) {
-            recognition = new Recognizer_Descriptors(&callbacks, faceSize, faceClassifiers, descriptorEstimator);
+            recognition = new Recognition::Descriptors(&callbacks, faceSize, faceClassifiers, descriptorEstimator);
         }
 
         if (!landmarksPredictor.empty()) {

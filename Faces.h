@@ -23,12 +23,12 @@
 #include <dlib/svm_threaded.h>
 
 #include "utils.hpp"
-#include "Detector.h"
-#include "Face.h"
+#include "Detection/Detection.h"
+#include "Face/Face.h"
 #include "Callbacks.hpp"
-#include "Recognizer.h"
-#include "Recognizer_LBPH.h"
-#include "Recognizer_Descriptors.h"
+#include "Recognition/recognition.h"
+#include "Recognition/LBPH.h"
+#include "Recognition/Descriptors.h"
 #include "FaceChecker.h"
 
 namespace Faces {
@@ -38,8 +38,8 @@ namespace Faces {
         cv::Size faceSize = cv::Size(150, 150);
 
         Callbacks callbacks;
-        Detector detector;
-        Recognizer *recognition = nullptr;
+        Detection detector;
+        Recognition::recognition *recognition = nullptr;
         FaceChecker checker;
 
         bool ok = true;

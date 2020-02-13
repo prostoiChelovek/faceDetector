@@ -2,16 +2,16 @@
 // Created by prostoichelovek on 08.05.19.
 //
 
-#include "Detector.h"
+#include "Detection.h"
 
 namespace Faces {
 
-    Detector::Detector(Callbacks *callbacks, cv::Size faceSize)
+    Detection::Detection(Callbacks *callbacks, cv::Size faceSize)
             : callbacks(callbacks), faceSize(faceSize) {
 
     }
 
-    Face *Detector::getLastFace(Face &now) {
+    Face *Detection::getLastFace(Face &now) {
         int minDist = -1;
         Face *r = nullptr;
         for (int i = 0; i < lastFaces.size(); i++) {
@@ -27,7 +27,7 @@ namespace Faces {
     }
 
 
-    bool Detector::readLandmarksPredictor(std::string path) {
+    bool Detection::readLandmarksPredictor(std::string path) {
         try {
             dlib::deserialize(path) >> landmarksPredictor;
             return true;
@@ -37,7 +37,7 @@ namespace Faces {
         }
     }
 
-    std::vector<cv::Mat> Detector::normalizeFaces(const cv::Mat &img) {
+    std::vector<cv::Mat> Detection::normalizeFaces(const cv::Mat &img) {
         dlib::cv_image<dlib::bgr_pixel> dImg = img;
         std::vector<cv::Mat> faceChips;
 
@@ -77,7 +77,7 @@ namespace Faces {
         return faceChips;
     }
 
-    bool Detector::readNet(std::string configFile, std::string weightFile) {
+    bool Detection::readNet(std::string configFile, std::string weightFile) {
         net = cv::dnn::readNet(configFile, weightFile);
         if (net.empty()) {
             log(ERROR, "Could not load net (", configFile, ", ", weightFile, ")");
@@ -86,7 +86,7 @@ namespace Faces {
         return true;
     }
 
-    bool Detector::detectFaces(cv::Mat &img) {
+    bool Detection::detectFaces(cv::Mat &img) {
         cv::Mat inputBlob = cv::dnn::blobFromImage(img, inScaleFactor, inSize, meanVal,
                                                    false, false);
         net.setInput(inputBlob, "data");
@@ -136,11 +136,11 @@ namespace Faces {
         return !faces.empty();
     }
 
-    bool Detector::operator()(cv::Mat &img) {
+    bool Detection::operator()(cv::Mat &img) {
         return detectFaces(img);
     }
 
-    void Detector::sortFacesByScore() {
+    void Detection::sortFacesByScore() {
         // in most cases, false predictions occurrence when face is too close to camera
         auto countScore = [&](const Face &f) -> int {
             int score = f.confidence;
@@ -161,7 +161,7 @@ namespace Faces {
         });
     }
 
-    void Detector::preventOverlapping() {
+    void Detection::preventOverlapping() {
         for (int i = 0; i < faces.size(); i++) {
             Face &f = faces[i];
             cv::Rect &rect = f.rect;

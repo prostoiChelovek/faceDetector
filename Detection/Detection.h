@@ -19,13 +19,13 @@
 #include <dlib/opencv.h>
 #include <dlib/svm_threaded.h>
 
-#include "utils.hpp"
-#include "Face.h"
-#include "Callbacks.hpp"
+#include "../utils.hpp"
+#include "../Face/Face.h"
+#include "../Callbacks.hpp"
 
 namespace Faces {
 
-    class Detector {
+    class Detection {
     public:
         cv::Size inSize = cv::Size(300, 300);
         double inScaleFactor = 1.0;
@@ -43,7 +43,7 @@ namespace Faces {
 
         dlib::shape_predictor landmarksPredictor;
 
-        explicit Detector(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(200, 200));
+        explicit Detection(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(200, 200));
 
         bool detectFaces(cv::Mat &img);
 
