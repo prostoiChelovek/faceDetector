@@ -94,7 +94,7 @@ int main(int argc, const char **argv) {
         }
     }).detach();
 
-    bool shouldRecDir = false;
+    bool shouldRecDir = true;
     while (source.isOpened()) {
         source >> frame;
         if (frame.empty())

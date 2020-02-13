@@ -16,11 +16,7 @@
 
 #include <opencv2/core.hpp>
 
-#ifdef USE_DLIB
-
 #include <dlib/opencv.h>
-
-#endif
 
 enum LogType {
     INFO, WARNING, ERROR
@@ -229,8 +225,6 @@ static bool fixROI(cv::Rect &rect, const cv::Size &roi) {
     return ok;
 }
 
-#ifdef USE_DLIB
-
 static dlib::rectangle openCVRectToDlib(const cv::Rect &r) {
     return dlib::rectangle((long) r.tl().x, (long) r.tl().y, (long) r.br().x - 1, (long) r.br().y - 1);
 }
@@ -247,6 +241,5 @@ cv::Mat dlibMatrix2cvMat(dlib::matrix<T> matr) {
     return bgr;
 }
 
-#endif
 
 #endif //FACES_UTILS_HPP

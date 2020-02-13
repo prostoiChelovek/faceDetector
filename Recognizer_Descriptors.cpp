@@ -2,7 +2,6 @@
 // Created by prostoichelovek on 27.07.19.
 //
 
-#ifdef USE_DLIB
 
 #include "Recognizer_Descriptors.h"
 
@@ -214,5 +213,3 @@ namespace Faces {
     }
 
 }
-
-#endif

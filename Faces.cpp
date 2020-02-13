@@ -31,7 +31,6 @@ namespace Faces {
             recognition = new Recognizer_LBPH(&callbacks, faceSize, LBPH_model);
         }
 
-#ifdef USE_DLIB
         if (!descriptorEstimator.empty() && !faceClassifiers.empty()) {
             recognition = new Recognizer_Descriptors(&callbacks, faceSize, faceClassifiers, descriptorEstimator);
         }
@@ -49,17 +48,7 @@ namespace Faces {
                 log(WARNING, "Cannot initialize face checker with classifier path", faceHistVal);
             }
         }
-#else
-        if (!descriptorEstimator.empty() || !faceClassifiers.empty()) {
-            log(WARNING, "DLIB support disabled, so you cannot use face descriptors");
-        }
-        if (!landmarksPredictor.empty()) {
-            log(WARNING, "DLIB support disabled, so you cannot use landmarks and face alignment");
-        }
-        if (!faceHistVal.empty()) {
-            log(WARNING, "DLIB support disabled, so you cannot use face checker");
-        }
-#endif
+
         if (recognition == nullptr) {
             ok = false;
             throw "Cannot create face recognizer";
@@ -84,7 +73,6 @@ namespace Faces {
         } else recognitionSkipped++;
     }
 
-#ifdef USE_DLIB
     void Faces::operator()(cv::Mat &img, cv::Mat &disp) {
         operator()(img);
         for (Face &f : detector.faces) {
@@ -96,8 +84,6 @@ namespace Faces {
         }
     }
 
-#endif
-
     void Faces::update() {
         detector.lastFaces = detector.faces;
         for (Face &f : detector.lastFaces) {
@@ -106,7 +92,6 @@ namespace Faces {
     }
 
     void Faces::draw(cv::Mat &img, bool displayAligned) {
-#ifdef USE_DLIB
         // For aligned faces ->
         int max_vert = img.rows / faceSize.height;
         int vert = 0, hor = 0;
@@ -115,7 +100,6 @@ namespace Faces {
             cols = faceSize.width;
         cv::Mat facesImg(img.rows, cols, 16, cv::Scalar(255, 255, 255));
         // <- For aligned faces
-#endif
 
         for (const Face &f : detector.faces) {
             // Color ->
@@ -196,7 +180,6 @@ namespace Faces {
             }
             // <- Landmarks
 
-#ifdef USE_DLIB
             // Aligned faces ->
             if (displayAligned) {
                 if (vert < max_vert) {
@@ -212,12 +195,9 @@ namespace Faces {
                 }
             }
             // <- Aligned faces
-#endif
         }
-#ifdef USE_DLIB
         if (displayAligned)
             cv::hconcat(std::vector<cv::Mat>{img, facesImg}, img);
-#endif
     }
 
 }

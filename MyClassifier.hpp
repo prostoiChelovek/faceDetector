@@ -5,7 +5,6 @@
 #ifndef FACES_MYCLASSIFIER_HPP
 #define FACES_MYCLASSIFIER_HPP
 
-#ifdef USE_DLIB
 
 #include <dlib/svm.h>
 
@@ -63,6 +62,5 @@ namespace Faces {
 
 }
 
-#endif //USE_DLIB
 
 #endif //FACES_MYCLASSIFIER_HPP

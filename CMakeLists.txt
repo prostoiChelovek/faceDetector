@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(faces)
 
-option(USE_DLIB "Compile with dlib?" ON)
 set(DLIB_PATH $ENV{HOME}/dlib)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -20,14 +19,8 @@ add_library(faces STATIC ${SOURCE_FILES})
 target_link_libraries(faces ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(faces ${OpenCV_LIBS})
 
-if (${USE_DLIB})
-    message(STATUS "Using Dlib")
-    add_subdirectory(${DLIB_PATH} dlib_build)
-    target_link_libraries(faces dlib)
-    target_compile_definitions(faces PUBLIC USE_DLIB)
-else ()
-    message(STATUS "Not using Dlib")
-endif ()
+add_subdirectory(${DLIB_PATH} dlib_build)
+target_link_libraries(faces dlib)
 
 add_executable(run main.cpp)
 target_link_libraries(run faces)

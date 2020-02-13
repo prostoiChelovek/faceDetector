@@ -5,8 +5,6 @@
 #ifndef FACES_RECOGNIZER_DESCRIPTORS_H
 #define FACES_RECOGNIZER_DESCRIPTORS_H
 
-#ifdef USE_DLIB
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -58,7 +56,5 @@ namespace Faces {
     };
 
 }
-
-#endif //USE_DLIB
 
 #endif //FACES_RECOGNIZER_DESCRIPTORS_H

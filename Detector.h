@@ -14,14 +14,10 @@
 #include <opencv2/dnn.hpp>
 #include <opencv2/face.hpp>
 
-#ifdef USE_DLIB
-
 #include <dlib/dnn.h>
 #include <dlib/clustering.h>
 #include <dlib/opencv.h>
 #include <dlib/svm_threaded.h>
-
-#endif
 
 #include "utils.hpp"
 #include "Face.h"
@@ -45,9 +41,7 @@ namespace Faces {
 
         Callbacks *callbacks;
 
-#ifdef USE_DLIB
         dlib::shape_predictor landmarksPredictor;
-#endif
 
         explicit Detector(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(200, 200));
 
@@ -61,13 +55,9 @@ namespace Faces {
 
         Face *getLastFace(Face &now);
 
-#ifdef USE_DLIB
-
         bool readLandmarksPredictor(std::string path);
 
         std::vector<cv::Mat> normalizeFaces(const cv::Mat &img);
-
-#endif
 
         bool readNet(std::string configFile, std::string weightFile);
 

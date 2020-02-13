@@ -5,8 +5,6 @@
 #ifndef FACES_FACECHECKER_H
 #define FACES_FACECHECKER_H
 
-#ifdef USE_DLIB
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -58,7 +56,5 @@ namespace Faces {
     };
 
 }
-
-#endif
 
 #endif //FACES_FACECHECKER_H

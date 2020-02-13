@@ -14,8 +14,6 @@
 #include <opencv2/dnn.hpp>
 #include <opencv2/face.hpp>
 
-#ifdef USE_DLIB
-
 #include <dlib/dnn.h>
 #include <dlib/gui_widgets.h>
 #include <dlib/clustering.h>
@@ -23,8 +21,6 @@
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/opencv.h>
 #include <dlib/svm_threaded.h>
-
-#endif
 
 #include "utils.hpp"
 #include "Detector.h"
@@ -44,9 +40,7 @@ namespace Faces {
         Callbacks callbacks;
         Detector detector;
         Recognizer *recognition = nullptr;
-#ifdef USE_DLIB
         FaceChecker checker;
-#endif
 
         bool ok = true;
 
@@ -63,10 +57,7 @@ namespace Faces {
 
         void operator()(cv::Mat &img);
 
-#ifdef USE_DLIB
         void operator()(cv::Mat &img, cv::Mat &disp);
-
-#endif
 
         void update();
 

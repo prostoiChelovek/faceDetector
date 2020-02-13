@@ -26,7 +26,6 @@ namespace Faces {
         return r;
     }
 
-#ifdef USE_DLIB
 
     bool Detector::readLandmarksPredictor(std::string path) {
         try {
@@ -77,8 +76,6 @@ namespace Faces {
 
         return faceChips;
     }
-
-#endif
 
     bool Detector::readNet(std::string configFile, std::string weightFile) {
         net = cv::dnn::readNet(configFile, weightFile);
@@ -131,14 +128,7 @@ namespace Faces {
         sortFacesByScore();
         preventOverlapping();
 
-#ifdef USE_DLIB
         std::vector<cv::Mat> faceImgs = normalizeFaces(img);
-#else
-        std::vector<cv::Mat> faceImgs{};
-            for (Face &f : faces) {
-                faceImgs.emplace_back(img(f.rect));
-            }
-#endif
         for (int i = 0; i < faces.size(); i++) {
             faces[i].img = faceImgs[i];
         }

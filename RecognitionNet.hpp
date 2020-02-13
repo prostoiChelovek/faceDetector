@@ -5,7 +5,6 @@
 #ifndef FACES_RECOGNITIONNET_HPP
 #define FACES_RECOGNITIONNET_HPP
 
-#ifdef USE_DLIB
 
 #include <dlib/dnn.h>
 #include <dlib/clustering.h>
@@ -59,6 +58,5 @@ namespace Faces {
 
 }
 
-#endif //USE_DLIB
 
 #endif //FACES_RECOGNITIONNET_HPP
