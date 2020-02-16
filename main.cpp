@@ -24,8 +24,6 @@ const string weightFile = data_dir + "/models/res10_300x300_ssd_iter_140000_fp16
 string samplesDir = data_dir + "/samples";
 string labelsFile = data_dir + "/labels.txt";
 
-string modelFile = data_dir + "/model.yml";
-
 string lmsPredictorFile = data_dir + "/models/shape_predictor_5_face_landmarks.dat";
 string descriptorsNetFIle = data_dir + "/models/dlib_face_recognition_resnet_model_v1.dat";
 string faceClassifiersFile = data_dir + "/classifiers.dat";
@@ -39,12 +37,12 @@ int main(int argc, const char **argv) {
     else
         source.open(stoi(argv[1]));
 
-    Faces::Faces faces(configFile, weightFile, lmsPredictorFile, "",
+    Faces::Faces faces(configFile, weightFile, lmsPredictorFile,
                        descriptorsNetFIle, faceClassifiersFile, histValidator,
                        labelsFile);
 
     faces.detectFreq = 3;
-    faces.recognition->minLabelNotChanged = 6;
+    faces.recognition.minLabelNotChanged = 6;
     faces.recognizeFreq = 9;
 
     // Callbacks ->
@@ -78,11 +76,11 @@ int main(int argc, const char **argv) {
     };
     createTrackbar("Detection thresh", "Face Detection", &detectTh, 100, detectThCb, &faces.detector);
     int recTh = 30;
-    faces.recognition->setThreshold(double(recTh) / 100.0);
+    faces.recognition.threshold = double(recTh) / 100.0;
     auto recThCb = [](int pos, void *data) {
-        static_cast<Faces::Recognition::recognition *>(data)->setThreshold(double(pos) / 100.0);
+        static_cast<Faces::Recognition::recognition *>(data)->threshold = double(pos) / 100.0;
     };
-    createTrackbar("recognition thresh", "Face Detection", &recTh, 200, recThCb, faces.recognition);
+    createTrackbar("recognition thresh", "Face Detection", &recTh, 200, recThCb, &faces.recognition);
 
     Mat img, frame;
 
@@ -118,37 +116,37 @@ int main(int argc, const char **argv) {
             std::cout << "Label: ";
             std::string lbl;
             std::getline(std::cin, lbl);
-            faces.recognition->addLabel(lbl);
-            log(INFO, "Label", lbl, "added with index", faces.recognition->labels.size() - 1);
+            faces.recognition.addLabel(lbl);
+            log(INFO, "Label", lbl, "added with index", faces.recognition.labels.size() - 1);
         }
         if (k == 'n') {
-            if (faces.recognition->currentLabel < faces.recognition->labels.size() - 1)
-                faces.recognition->currentLabel++;
+            if (faces.recognition.currentLabel < faces.recognition.labels.size() - 1)
+                faces.recognition.currentLabel++;
             else
-                faces.recognition->currentLabel = 0;
-            log(INFO, "Current label is", faces.recognition->currentLabel, "-",
-                faces.recognition->labels[faces.recognition->currentLabel]);
+                faces.recognition.currentLabel = 0;
+            log(INFO, "Current label is", faces.recognition.currentLabel, "-",
+                faces.recognition.labels[faces.recognition.currentLabel]);
         }
         if (k == 'p') {
-            if (faces.recognition->currentLabel > 0)
-                faces.recognition->currentLabel--;
+            if (faces.recognition.currentLabel > 0)
+                faces.recognition.currentLabel--;
             else
-                faces.recognition->currentLabel = faces.recognition->labels.size() - 1;
-            log(INFO, "Current label is", faces.recognition->currentLabel, "-",
-                faces.recognition->labels[faces.recognition->currentLabel]);
+                faces.recognition.currentLabel = faces.recognition.labels.size() - 1;
+            log(INFO, "Current label is", faces.recognition.currentLabel, "-",
+                faces.recognition.labels[faces.recognition.currentLabel]);
         }
         if (k == 's') {
-            if (!faces.recognition->labels.empty()) {
+            if (!faces.recognition.labels.empty()) {
                 if (!faces.detector.faces.empty()) {
-                    string path = faces.recognition->addSample(samplesDir, faces.detector.faces[0]);
-                    log(INFO, "Detection train image", faces.recognition->imgNum[faces.recognition->currentLabel],
+                    string path = faces.recognition.addSample(samplesDir, faces.detector.faces[0]);
+                    log(INFO, "Detection train image", faces.recognition.imgNum[faces.recognition.currentLabel],
                         "saved to", path);
                 } else log(ERROR, "There is no faces");
             } else log(ERROR, "Labels are empty! Press 'l' to add new");
         }
         if (k == 't') {
-            faces.recognition->train(samplesDir);
-            faces.recognition->save(faceClassifiersFile);
+            faces.recognition.train(samplesDir);
+            faces.recognition.save(faceClassifiersFile);
             log(INFO, "recognition model trained");
         }
         if (k == 'd') {

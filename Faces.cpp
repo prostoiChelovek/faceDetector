@@ -6,33 +6,18 @@
 
 namespace Faces {
 
-    Faces::Faces(std::string configFile, std::string weightFile, std::string landmarksPredictor,
-                 std::string LBPH_model, std::string descriptorEstimator,
+    Faces::Faces(std::string configFile, std::string weightFile,
+                 std::string landmarksPredictor, std::string descriptorEstimator,
                  std::string faceClassifiers, std::string faceHistVal,
                  std::string labelsList)
-            : detector(&callbacks, faceSize) {
-        if (!LBPH_model.empty() && !descriptorEstimator.empty() && !faceClassifiers.empty()) {
-            log(ERROR, "You can use only one recognition method at a time");
-            ok = false;
-        }
-        if (LBPH_model.empty() && (descriptorEstimator.empty() || faceClassifiers.empty())) {
-            log(ERROR, "Select one of recognition methods and pass its parameters");
-            ok = false;
-        }
+            : detector(&callbacks, faceSize),
+              recognition(&callbacks, faceSize, faceClassifiers, descriptorEstimator) {
 
         if (!configFile.empty() && !weightFile.empty()) {
             if (!detector.readNet(configFile, weightFile)) {
                 log(ERROR, "Cannot load face detection model from", configFile, "amd", weightFile);
                 ok = false;
             }
-        }
-
-        if (!LBPH_model.empty()) {
-            recognition = new Recognition::LBPH(&callbacks, faceSize, LBPH_model);
-        }
-
-        if (!descriptorEstimator.empty() && !faceClassifiers.empty()) {
-            recognition = new Recognition::Descriptors(&callbacks, faceSize, faceClassifiers, descriptorEstimator);
         }
 
         if (!landmarksPredictor.empty()) {
@@ -49,13 +34,8 @@ namespace Faces {
             }
         }
 
-        if (recognition == nullptr) {
-            ok = false;
-            throw "Cannot create face recognizer";
-        }
-
         if (!labelsList.empty()) {
-            if (!recognition->readLabels(labelsList)) {
+            if (!recognition.readLabels(labelsList)) {
                 log(ERROR, "Cannot read labels list from", labelsList);
                 ok = false;
             }
@@ -68,7 +48,7 @@ namespace Faces {
             detectionSkipped = 0;
         } else detectionSkipped++;
         if (recognitionSkipped == recognizeFreq) {
-            recognition->operator()(detector.faces);
+            recognition.recognize(detector.faces);
             recognitionSkipped = 0;
         } else recognitionSkipped++;
     }
@@ -120,8 +100,8 @@ namespace Faces {
             // Label ->
             std::string text = std::to_string(f.confidence);
             if (f.getLabel() > -1) {
-                std::string label = f.getLabel() < recognition->labels.size()
-                                    ? recognition->labels[f.getLabel()] : "WTF";
+                std::string label = f.getLabel() < recognition.labels.size()
+                                    ? recognition.labels[f.getLabel()] : "WTF";
                 text += " - " + label;
             }
             std::for_each(text.begin(), text.end(),

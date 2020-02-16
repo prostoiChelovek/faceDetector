@@ -13,10 +13,16 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <dlib/dnn.h>
+#include <dlib/clustering.h>
+#include <dlib/opencv.h>
+#include <dlib/svm_threaded.h>
+
 #include "../utils.hpp"
 #include "../Face/Face.h"
 #include "../Callbacks.hpp"
 #include "../Detection/Detection.h"
+#include "RecognitionNet.hpp"
 
 namespace Faces {
     namespace Recognition {
@@ -27,6 +33,8 @@ namespace Faces {
             std::vector<std::string> labels;
             std::map<int, int> imgNum;
 
+            double threshold = 0.3;
+
             cv::Size faceSize = cv::Size(150, 150);
 
             int minLabelNotChanged = 5;
@@ -35,30 +43,38 @@ namespace Faces {
 
             bool ok = false;
 
-            explicit recognition(Callbacks *callbacks = nullptr, cv::Size faceSize = cv::Size(150, 150));
+            explicit recognition(Callbacks *callbacks, cv::Size faceSize,
+                                 std::string classifierFile, std::string descriptorFile);
 
             ~recognition();
 
-            void operator()(Face &face);
+            void train(std::string samplesDir);
 
-            void operator()(std::vector<Face> &faces);
+            bool save(std::string file);
 
-            virtual void train(std::string samplesDir) = 0;
+            void load(std::string classifierFile, std::string descriptorFile);
 
-            virtual bool save(std::string file) = 0;
+            std::string addSample(std::string storage, Face &face);
 
-            virtual std::string addSample(std::string storage, Face &face) = 0;
-
-            virtual void setThreshold(double val) = 0;
+            std::map<std::string, int> getSamples(std::string dir);
 
             bool readLabels(std::string file);
 
             void addLabel(std::string &label);
 
+            void getDescriptors(Face &face);
+
+            void recognize(Face &face);
+
+            void recognize(std::vector<Face> &faces);
+
         private:
             std::ofstream labelsFs;
 
-            virtual void recognize(Face &face) = 0;
+            // DNN that estimates 128D face descriptors
+            anet_type descriptor;
+
+            std::vector<MyClassifier> classifiers;
 
         };
 

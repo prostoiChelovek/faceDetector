@@ -27,8 +27,6 @@
 #include "Face/Face.h"
 #include "Callbacks.hpp"
 #include "Recognition/recognition.h"
-#include "Recognition/LBPH.h"
-#include "Recognition/Descriptors.h"
 #include "FaceChecker.h"
 
 namespace Faces {
@@ -39,7 +37,7 @@ namespace Faces {
 
         Callbacks callbacks;
         Detection detector;
-        Recognition::recognition *recognition = nullptr;
+        Recognition::recognition recognition;
         FaceChecker checker;
 
         bool ok = true;
@@ -47,12 +45,10 @@ namespace Faces {
         int detectFreq = 1;
         int recognizeFreq = 1;
 
-        // recognitionModel used in LBPH recognizer
-        // descriptorEstimator and faceClassifiers used in descriptor-based recognizer
         // faceHistVal SVM for face checker
         Faces(std::string configFile, std::string weightFile,
-              std::string landmarksPredictor = "", std::string LBPH_model = "",
-              std::string descriptorEstimator = "", std::string faceClassifiers = "",
+              std::string landmarksPredictor = "", std::string descriptorEstimator = "",
+              std::string faceClassifiers = "",
               std::string faceHistVal = "", std::string labelsList = "");
 
         void operator()(cv::Mat &img);
