@@ -16,7 +16,7 @@
 #include <opencv2/face.hpp>
 
 #include "../Recognition/MyClassifier.hpp"
-#include "../utils.hpp"
+#include "../utils/utils.hpp"
 
 namespace Faces {
 

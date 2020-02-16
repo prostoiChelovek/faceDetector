@@ -22,7 +22,7 @@
 #include <dlib/opencv.h>
 #include <dlib/svm_threaded.h>
 
-#include "utils.hpp"
+#include "utils/utils.hpp"
 #include "Detection/Detection.h"
 #include "Face/Face.h"
 #include "Callbacks.hpp"

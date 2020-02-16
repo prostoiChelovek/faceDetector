@@ -10,6 +10,7 @@
 #include <opencv2/tracking.hpp>
 
 #include "Faces.h"
+#include "utils/Config.h"
 
 using namespace cv;
 using namespace std;
@@ -36,6 +37,11 @@ int main(int argc, const char **argv) {
         source.open(0);
     else
         source.open(stoi(argv[1]));
+
+    Faces::Config cfg{"hello, world", 42, 21, 10};
+    nlohmann::json cfg_json = Faces::Serialization::toJson(cfg);
+    std::cout << std::setw(4) << cfg_json << std::endl;
+    Faces::Config cfg2 = Faces::Serialization::fromJson<Faces::Config>(cfg_json);
 
     Faces::Faces faces(configFile, weightFile, lmsPredictorFile,
                        descriptorsNetFIle, faceClassifiersFile, histValidator,

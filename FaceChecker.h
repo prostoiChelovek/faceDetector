@@ -18,7 +18,7 @@
 #include <dlib/svm.h>
 
 #include "Face/Face.h"
-#include "utils.hpp"
+#include "utils/utils.hpp"
 
 namespace Faces {
 
