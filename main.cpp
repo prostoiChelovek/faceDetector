@@ -17,19 +17,7 @@ using namespace std;
 using namespace cv::dnn;
 using namespace cv::face;
 
-const string data_dir = "../data";
-
-const string configFile = data_dir + "/models/deploy.prototxt";
-const string weightFile = data_dir + "/models/res10_300x300_ssd_iter_140000_fp16.caffemodel";
-
-string samplesDir = data_dir + "/samples";
-string labelsFile = data_dir + "/labels.txt";
-
-string lmsPredictorFile = data_dir + "/models/shape_predictor_5_face_landmarks.dat";
-string descriptorsNetFIle = data_dir + "/models/dlib_face_recognition_resnet_model_v1.dat";
-string faceClassifiersFile = data_dir + "/classifiers.dat";
-
-string histValidator = data_dir + "/faceHistCHecker.dat";
+const string config_file = "../config.json";
 
 int main(int argc, const char **argv) {
     VideoCapture source;
@@ -38,14 +26,7 @@ int main(int argc, const char **argv) {
     else
         source.open(stoi(argv[1]));
 
-    Faces::Config cfg{"hello, world", 42, 21, 10};
-    nlohmann::json cfg_json = Faces::Serialization::toJson(cfg);
-    std::cout << std::setw(4) << cfg_json << std::endl;
-    Faces::Config cfg2 = Faces::Serialization::fromJson<Faces::Config>(cfg_json);
-
-    Faces::Faces faces(configFile, weightFile, lmsPredictorFile,
-                       descriptorsNetFIle, faceClassifiersFile, histValidator,
-                       labelsFile);
+    Faces::Faces faces(config_file);
 
     faces.detectFreq = 3;
     faces.recognition.minLabelNotChanged = 6;
@@ -144,15 +125,15 @@ int main(int argc, const char **argv) {
         if (k == 's') {
             if (!faces.recognition.labels.empty()) {
                 if (!faces.detector.faces.empty()) {
-                    string path = faces.recognition.addSample(samplesDir, faces.detector.faces[0]);
+                    string path = faces.recognition.addSample(faces.cfg.samples_directory, faces.detector.faces[0]);
                     log(INFO, "Detection train image", faces.recognition.imgNum[faces.recognition.currentLabel],
                         "saved to", path);
                 } else log(ERROR, "There is no faces");
             } else log(ERROR, "Labels are empty! Press 'l' to add new");
         }
         if (k == 't') {
-            faces.recognition.train(samplesDir);
-            faces.recognition.save(faceClassifiersFile);
+            faces.recognition.train(faces.cfg.samples_directory);
+            faces.recognition.save(faces.cfg.recognition_classifier);
             log(INFO, "recognition model trained");
         }
         if (k == 'd') {
@@ -160,9 +141,9 @@ int main(int argc, const char **argv) {
             log(INFO, "Should", (shouldRecDir ? "" : " not"), "recognize faces` directions");
         }
         if (k == 'f') {
-            Mat disp = imread(data_dir + "/faceDisp.png", IMREAD_GRAYSCALE);
-            Mat disp2 = imread(data_dir + "/faceDisp2.png", IMREAD_GRAYSCALE);
-            faces.checker.train(samplesDir);
+            Mat disp = imread(faces.cfg.data_directory + "/faceDisp.png", IMREAD_GRAYSCALE);
+            Mat disp2 = imread(faces.cfg.data_directory + "/faceDisp2.png", IMREAD_GRAYSCALE);
+            faces.checker.train(faces.cfg.samples_directory);
             faces.checker.save();
             faces.checker.check(disp);
             faces.checker.check(disp2);

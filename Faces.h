@@ -28,11 +28,14 @@
 #include "Callbacks.hpp"
 #include "Recognition/recognition.h"
 #include "FaceChecker.h"
+#include "utils/Config.h"
 
 namespace Faces {
 
     class Faces {
     public:
+        Config cfg;
+
         cv::Size faceSize = cv::Size(150, 150);
 
         Callbacks callbacks;
@@ -46,10 +49,7 @@ namespace Faces {
         int recognizeFreq = 1;
 
         // faceHistVal SVM for face checker
-        Faces(std::string configFile, std::string weightFile,
-              std::string landmarksPredictor = "", std::string descriptorEstimator = "",
-              std::string faceClassifiers = "",
-              std::string faceHistVal = "", std::string labelsList = "");
+        explicit Faces(const std::string &config_file);
 
         void operator()(cv::Mat &img);
 

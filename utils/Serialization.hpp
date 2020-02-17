@@ -67,6 +67,24 @@ namespace Faces {
         }
 
         template<typename T>
+        void fromJson(T *object, const nlohmann::json &data) {
+            // We first get the number of properties
+            constexpr auto nbProperties = std::tuple_size<decltype(T::properties)>::value;
+
+            // We iterate on the index sequence of size `nbProperties`
+            for_sequence(std::make_index_sequence<nbProperties>{}, [&](auto i) {
+                // get the property
+                constexpr auto property = std::get<i>(T::properties);
+
+                // get the type of the property
+                using Type = typename decltype(property)::Type;
+
+                // set the value to the member
+                object->*(property.member) = data[nlohmann::json::json_pointer(property.path)];
+            });
+        }
+
+        template<typename T>
         nlohmann::json toJson(const T &object) {
             nlohmann::json data;
 

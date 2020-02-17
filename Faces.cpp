@@ -6,37 +6,34 @@
 
 namespace Faces {
 
-    Faces::Faces(std::string configFile, std::string weightFile,
-                 std::string landmarksPredictor, std::string descriptorEstimator,
-                 std::string faceClassifiers, std::string faceHistVal,
-                 std::string labelsList)
-            : detector(&callbacks, faceSize),
-              recognition(&callbacks, faceSize, faceClassifiers, descriptorEstimator) {
+    Faces::Faces(const std::string &config_file)
+            : cfg(config_file),
+              detector(&callbacks, faceSize),
+              recognition(&callbacks, faceSize, cfg.recognition_classifier, cfg.recognition_descriptorsNet) {
 
-        if (!configFile.empty() && !weightFile.empty()) {
-            if (!detector.readNet(configFile, weightFile)) {
-                log(ERROR, "Cannot load face detection model from", configFile, "amd", weightFile);
+        if (!detector.readNet(cfg.detection_netConfig, cfg.detection_netWeights)) {
+            log(ERROR, "Cannot load face detection model from", cfg.detection_netConfig, "amd",
+                cfg.detection_netWeights);
+            ok = false;
+        }
+
+        if (!cfg.landmarks_model.empty()) {
+            if (!detector.readLandmarksPredictor((cfg.landmarks_model))) {
+                log(ERROR, "Cannot load landmarks predictor from", cfg.landmarks_model);
                 ok = false;
             }
         }
 
-        if (!landmarksPredictor.empty()) {
-            if (!detector.readLandmarksPredictor((landmarksPredictor))) {
-                log(ERROR, "Cannot load landmarks predictor from", landmarksPredictor);
-                ok = false;
-            }
-        }
-
-        if (!faceHistVal.empty()) {
-            checker = FaceChecker(faceHistVal);
+        if (!cfg.checker_histogramChecker.empty()) {
+            checker = FaceChecker(cfg.checker_histogramChecker);
             if (!checker.ok) {
-                log(WARNING, "Cannot initialize face checker with classifier path", faceHistVal);
+                log(WARNING, "Cannot initialize face checker with classifier path", cfg.checker_histogramChecker);
             }
         }
 
-        if (!labelsList.empty()) {
-            if (!recognition.readLabels(labelsList)) {
-                log(ERROR, "Cannot read labels list from", labelsList);
+        if (!cfg.samples_labelsFile.empty()) {
+            if (!recognition.readLabels(cfg.samples_labelsFile)) {
+                log(ERROR, "Cannot read labels list from", cfg.samples_labelsFile);
                 ok = false;
             }
         }
