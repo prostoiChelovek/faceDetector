@@ -30,3 +30,8 @@ target_link_libraries(faces dlib)
 
 add_executable(run main.cpp)
 target_link_libraries(run faces)
+
+add_executable(test Test/test.cpp Test/Dataset.h Test/Dataset.cpp)
+add_subdirectory(Test/pugixml)
+target_link_libraries(test pugixml)
+target_link_libraries(test faces)
