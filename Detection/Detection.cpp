@@ -16,9 +16,12 @@ namespace Faces {
         Face *r = nullptr;
         for (int i = 0; i < lastFaces.size(); i++) {
             Face *l = &lastFaces[i];
-            int dist = getDist(l->rect.tl(), now.rect.tl())
-                       + getDist(l->rect.br(), now.rect.br());
-            if (dist < minDist && dist <= 50 || minDist == -1) {
+
+            cv::Point a_center(now.rect.x + now.rect.width / 2, now.rect.y + now.rect.height / 2);
+            cv::Point b_center(l->rect.x + l->rect.width / 2, l->rect.y + l->rect.height / 2);
+
+            int dist = getDist(a_center, b_center);
+            if ((dist < minDist || minDist == -1) && dist <= 150) {
                 minDist = dist;
                 r = l;
             }

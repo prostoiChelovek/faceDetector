@@ -66,6 +66,10 @@ namespace Faces {
 
         bool hasMoved() const;
 
+        // if color is not specified, it will be selected based on label
+        cv::Scalar draw(cv::Mat &img, const std::vector<std::string> *labels = nullptr,
+                        const cv::Scalar &color = cv::Scalar(-1)) const;
+
         bool operator==(const Face &f);
 
         bool operator!=(const Face &f);
