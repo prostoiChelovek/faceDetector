@@ -68,18 +68,20 @@ namespace Faces {
         }
     }
 
-    void Faces::draw(cv::Mat &img, bool displayAligned) {
+    void Faces::draw(cv::Mat &img, bool displayAligned, bool draw_faces) {
         // For aligned faces ->
         int max_vert = img.rows / faceSize.height;
         int vert = 0, hor = 0;
-        int cols = (detector.faces.size() / max_vert) * faceSize.width;
+        int cols = std::ceil((float) detector.faces.size() / (float) max_vert) * faceSize.width;
         if (cols == 0 && !detector.faces.empty())
             cols = faceSize.width;
         cv::Mat facesImg(img.rows, cols, 16, cv::Scalar(255, 255, 255));
         // <- For aligned faces
 
         for (const Face &f : detector.faces) {
-           f.draw(img, &recognition.labels);
+            if (draw_faces) {
+                f.draw(img, &recognition.labels);
+            }
 
             // Aligned faces ->
             if (displayAligned) {

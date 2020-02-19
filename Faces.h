@@ -57,7 +57,7 @@ namespace Faces {
 
         void update();
 
-        void draw(cv::Mat &img, bool displayAligned = true);
+        void draw(cv::Mat &img, bool displayAligned = true, bool draw_faces = true);
 
     private:
         int detectionSkipped = 0;

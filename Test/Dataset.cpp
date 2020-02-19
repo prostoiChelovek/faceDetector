@@ -5,6 +5,14 @@
 #include "Dataset.h"
 
 
+void Faces::Annotation_object::draw(cv::Mat &img, const cv::Scalar &color) const {
+    cv::rectangle(img, rect, color, 2, 4);
+    cv::rectangle(img, cv::Rect(rect.x, rect.y - 20, rect.width, 25),
+                  color, cv::FILLED, 4);
+    cv::putText(img, label, rect.tl(),
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+}
+
 std::ostream &Faces::operator<<(std::ostream &os, const Annotation_object &a) {
     os << "Label: " << a.label << "; Rect: " << a.rect << std::endl;
     return os;
@@ -45,11 +53,7 @@ bool Faces::Annotation::load() {
 
 void Faces::Annotation::draw(cv::Mat &img) {
     for (const Annotation_object &obj : objects) {
-        cv::rectangle(img, obj.rect, cv::Scalar(0, 255, 0), 2, 4);
-        cv::rectangle(img, cv::Rect(obj.rect.x, obj.rect.y - 20, obj.rect.width, 25),
-                      cv::Scalar(0, 255, 0), cv::FILLED, 4);
-        cv::putText(img, obj.label, obj.rect.tl(),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+        obj.draw(img);
     }
 }
 

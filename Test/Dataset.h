@@ -23,6 +23,8 @@ namespace Faces {
 
         Annotation_object(cv::Rect rect, std::string label) : rect(rect), label(label) {}
 
+        void draw(cv::Mat &img, const cv::Scalar &color = cv::Scalar(0, 255, 0)) const;
+
         friend std::ostream &operator<<(std::ostream &os, const Annotation_object &a);
     };
 
