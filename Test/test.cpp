@@ -21,7 +21,7 @@ int find_similar(T_a &a, std::vector<T_b> &bs) {
         cv::Point b_center(b.rect.x + b.rect.width / 2, b.rect.y + b.rect.height / 2);
 
         int dist = getDist(a_center, b_center);
-        if ((dist < minDist || minDist == -1) && dist <= 80) {
+        if ((dist < minDist || minDist == -1) && dist <= a.rect.width / 2) {
             minDist = dist;
             r = i;
         }
@@ -34,12 +34,14 @@ int main() {
     faces.detectFreq = 0;
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
+    faces.recognition.threshold = 0.55;
 
     Faces::Dataset dataset("/home/prostoichelovek/Документы/datasets/faces/dataset_from_dataturks/annotations_voc");
 
     int not_detected = 0;
     int false_detected = 0;
     int detected = 0;
+    int false_recognitions = 0;
     int total = 0;
 
     float time = 0;
@@ -65,6 +67,10 @@ int main() {
 
         for (int i = 0; i < faces.detector.faces.size(); i++) {
             Faces::Face &f = faces.detector.faces[i];
+            if (f.getLabel() != -1) {
+                false_recognitions++;
+            }
+
             int similar_id = find_similar(f, annotation.objects);
             if (similar_id != -1) {
                 Faces::Annotation_object &similar = annotation.objects[similar_id];
@@ -120,6 +126,7 @@ int main() {
     log(INFO, "Not detected:", not_detected, "/", total);
     log(INFO, "False detected:", false_detected, "/", total);
     log(INFO, "Successfully detected:", detected, "/", total);
+    log(INFO, "False recognized:", false_recognitions, "/", detected);
     log(INFO, "Time elapsed: ", time, "s / ", total, "faces");
     log(INFO, "Average time: ", time / (float) total, "s / face");
 

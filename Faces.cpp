@@ -11,7 +11,7 @@ namespace Faces {
               detector(&callbacks, faceSize),
               recognition(&callbacks, faceSize, cfg.recognition_classifier, cfg.recognition_descriptorsNet) {
 
-        if (!detector.readNet(cfg.detection_netConfig, cfg.detection_netWeights)) {
+        if (!detector.readNet("../modules/MTCNN/models")) { // TODO: add this to config
             log(ERROR, "Cannot load face detection model from", cfg.detection_netConfig, "amd",
                 cfg.detection_netWeights);
             ok = false;

@@ -17,7 +17,11 @@ Faces::Config::Config(const std::string &config_file)
             config_fs.open(config_file, std::ios::in | std::ios::out);
         }
     }
-    load();
+    if (!load()) {
+        log(WARNING, "Cannot load config from", config_file, ", putting default values");
+        log(INFO, "21", config_fs.is_open());
+        save();
+    }
 }
 
 nlohmann::json Faces::Config::serialize() {
@@ -29,9 +33,12 @@ void Faces::Config::deserialize(const nlohmann::json &data) {
 }
 
 bool Faces::Config::save() {
+    log(INFO, "37", config_fs.is_open());
     if (config_fs) {
         nlohmann::json json = serialize();
+        log(INFO, "39", (bool) config_fs, config_fs.is_open(), strerror(errno));
         config_fs << std::setw(4) << json << std::endl;
+        log(INFO, "41", (bool) config_fs, config_fs.is_open(), strerror(errno));
         return true;
     }
     log(ERROR, "Cannot save config because file is not open");
@@ -40,13 +47,17 @@ bool Faces::Config::save() {
 
 bool Faces::Config::load() {
     if (config_fs) {
-        nlohmann::json json;
-        config_fs >> json;
-        deserialize(json);
-
-        prefix_paths();
-
-        return true;
+        try {
+            nlohmann::json json;
+            config_fs >> json;
+            deserialize(json);
+            prefix_paths();
+            return true;
+        } catch (std::exception &e) {
+            log(INFO, "54", config_fs.is_open()); // 1
+            log(ERROR, "Cannot load config from", config_file, ":", e.what());
+            return false;
+        }
     }
     log(ERROR, "Cannot load config because file is not open");
     return false;
