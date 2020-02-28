@@ -7,16 +7,8 @@
 namespace Faces {
 
     Detection::Detection(Callbacks *callbacks, cv::Size faceSize)
-            : callbacks(callbacks), faceSize(faceSize),
-              p_mtcnn(mtcnn_factory::create_detector("tensorflow")) {
-        if (p_mtcnn == nullptr) {
-            std::cerr << "supported types: ";
-            std::vector<std::string> type_list = mtcnn_factory::list();
-            for (const auto &i : type_list)
-                std::cerr << " " << i;
-            std::cerr << std::endl;
-        }
-        p_mtcnn->set_threshold(0.6, 0.75, 0.8);
+            : callbacks(callbacks), faceSize(faceSize) {
+
     }
 
     Face *Detection::getLastFace(Face &now) {
@@ -88,9 +80,10 @@ namespace Faces {
         return faceChips;
     }
 
-    bool Detection::readNet(const std::string &models_dir) {
-        if (p_mtcnn->load_model(models_dir) == -1) {
-            log(ERROR, "Could not load mtcnn from", models_dir);
+    bool Detection::readNet(std::string configFile, std::string weightFile) {
+        net = cv::dnn::readNet(configFile, weightFile);
+        if (net.empty()) {
+            log(ERROR, "Could not load net (", configFile, ", ", weightFile, ")");
             return false;
         }
         return true;
@@ -99,25 +92,39 @@ namespace Faces {
     bool Detection::detectFaces(cv::Mat &img) {
         cv::Mat inputBlob = cv::dnn::blobFromImage(img, inScaleFactor, inSize, meanVal,
                                                    false, false);
+        net.setInput(inputBlob, "data");
+        cv::Mat detection = net.forward("detection_out");
+
+        cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+
         faces.clear();
 
-        std::vector<face_box> face_info;
-        p_mtcnn->detect(img, face_info);
+        for (int i = 0; i < detectionMat.rows; i++) {
+            float confidence = detectionMat.at<float>(i, 2);
 
-        for (const face_box &box : face_info) {
-            Face f;
-            f.rect = cv::Rect(cv::Point(box.x0, box.y0),
-                              cv::Point(box.x1, box.y1));
+            if (confidence > confidenceThreshold) {
+                auto x1 = static_cast<int>(detectionMat.at<float>(i, 3) * img.cols);
+                auto y1 = static_cast<int>(detectionMat.at<float>(i, 4) * img.rows);
+                auto x2 = static_cast<int>(detectionMat.at<float>(i, 5) * img.cols);
+                auto y2 = static_cast<int>(detectionMat.at<float>(i, 6) * img.rows);
 
-            f.confidence = box.score * 100;
+                Face f;
+                f.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+                bool ok = f.checkBounds(cv::Size(img.cols, img.rows));
+                if (!ok)
+                    continue;
 
-            f.setLast(getLastFace(f));
+                f.confidence = confidence * 100;
 
-            faces.emplace_back(f);
-            if (callbacks != nullptr) {
-                callbacks->call("faceDetected", &faces[faces.size() - 1]);
-                if (f.hasMoved())
-                    callbacks->call("faceMoved", &faces[faces.size() - 1]);
+                f.setLast(getLastFace(f));
+
+                faces.emplace_back(f);
+
+                if (callbacks != nullptr) {
+                    callbacks->call("faceDetected", &faces[faces.size() - 1]);
+                    if (f.hasMoved())
+                        callbacks->call("faceMoved", &faces[faces.size() - 1]);
+                }
             }
         }
 

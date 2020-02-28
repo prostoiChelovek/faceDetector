@@ -28,11 +28,6 @@ target_link_libraries(faces nlohmann_json::nlohmann_json)
 add_subdirectory(${DLIB_PATH} dlib_build)
 target_link_libraries(faces dlib)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/MTCNN/cmake/modules)
-add_subdirectory(modules/MTCNN/libmtcnn)
-include_directories(modules/MTCNN/include)
-target_link_libraries(faces mtcnn)
-
 add_executable(run main.cpp)
 target_link_libraries(run faces)
 

@@ -19,9 +19,6 @@
 #include <dlib/opencv.h>
 #include <dlib/svm_threaded.h>
 
-#include "tensorflow_mtcnn.hpp"
-#include "mtcnn.hpp"
-
 #include "../utils/utils.hpp"
 #include "../Face/Face.h"
 #include "../Callbacks.hpp"
@@ -37,7 +34,7 @@ namespace Faces {
 
         cv::Size faceSize = cv::Size(200, 200);
 
-        mtcnn *p_mtcnn;
+        cv::dnn::Net net;
 
         std::vector<Face> faces;
         std::vector<Face> lastFaces;
@@ -62,7 +59,7 @@ namespace Faces {
 
         std::vector<cv::Mat> normalizeFaces(const cv::Mat &img);
 
-        bool readNet(const std::string &models_dir);
+        bool readNet(std::string configFile, std::string weightFile);
 
     };
 

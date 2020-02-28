@@ -20,8 +20,6 @@ using namespace cv::face;
 const string config_file = "../config.json";
 
 int main(int argc, const char **argv) {
-    // Faces::Config cfg("../config_test.json");
-
     VideoCapture source;
     if (argc == 1)
         source.open(0);
