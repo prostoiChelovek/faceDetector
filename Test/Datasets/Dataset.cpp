@@ -3,6 +3,7 @@
 //
 
 #include "Dataset.h"
+#include "Dataset_SoF.h"
 
 
 void Faces::Annotation_object::draw(cv::Mat &img, const cv::Scalar &color) const {

@@ -7,19 +7,23 @@
 
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <opencv2/opencv.hpp>
 
 #include "pugixml.hpp"
 
-#include "../utils/utils.hpp"
+#include "../../utils/utils.hpp"
 
 namespace Faces {
 
-    struct Annotation_object {
+    class Annotation_object {
+    public:
         cv::Rect rect;
         std::string label;
+
+        Annotation_object() = default;
 
         Annotation_object(cv::Rect rect, std::string label) : rect(rect), label(label) {}
 
@@ -43,7 +47,7 @@ namespace Faces {
 
         bool load();
 
-        void draw(cv::Mat &img);
+        virtual void draw(cv::Mat &img);
 
         explicit operator bool() const;
 
@@ -53,8 +57,6 @@ namespace Faces {
 
     class Dataset {
     public:
-        std::string annotations_directory = "annotations";
-
         int current_file = 1;
 
         explicit Dataset(const std::string &annotations_directory) : annotations_directory(annotations_directory) {}
@@ -64,6 +66,9 @@ namespace Faces {
         bool get_sample(int num, Annotation &annotation, cv::Mat &img);
 
         bool get_next(Annotation &annotation, cv::Mat &img);
+
+    private:
+        std::string annotations_directory = "annotations";
 
     };
 

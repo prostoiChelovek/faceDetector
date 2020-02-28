@@ -6,7 +6,9 @@
 
 #include "../Faces.h"
 
-#include "Dataset.h"
+#include "Datasets/Dataset.h"
+
+#include "Datasets/Dataset_SoF.h"
 
 const std::string config_file = "../config.json";
 
@@ -34,6 +36,11 @@ int main() {
     faces.detectFreq = 0;
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
+
+    Faces::Dataset_SoF test("/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json");
+    Faces::Annotation_SoF a;
+    cv::Mat img_test;
+    test.get_sample(1, a, img_test);
 
     Faces::Dataset dataset("/home/prostoichelovek/Документы/datasets/faces/dataset_from_dataturks/annotations_voc");
 

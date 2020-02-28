@@ -80,7 +80,7 @@ namespace Faces {
                 using Type = typename decltype(property)::Type;
 
                 // set the value to the member
-                object->*(property.member) = data[nlohmann::json::json_pointer(property.path)];
+                object->*(property.member) = data[nlohmann::json::json_pointer(property.path)].get<Type>();
             });
         }
 
