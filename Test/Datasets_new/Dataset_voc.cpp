@@ -14,10 +14,9 @@ namespace Faces {
                           color, cv::FILLED, 4);
             cv::putText(img, label, rect.tl(),
                         cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
-
         }
 
-        cv::Mat Image_loader_voc::load(const int id) {
+        cv::Mat Image_loader_voc::load() {
             return cv::imread(path);
         }
 

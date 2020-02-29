@@ -18,7 +18,7 @@ namespace Faces {
             virtual void draw(cv::Mat &img, const cv::Scalar &color = cv::Scalar(0, 255, 0)) const = 0;
         };
 
-        template<typename ID_t = int, ID_t Default_id = 0>
+        template<class... ID_t>
         class Image_loader {
         public:
             std::string path;
@@ -27,7 +27,7 @@ namespace Faces {
 
             explicit Image_loader(const std::string &path) : path(path) {}
 
-            virtual cv::Mat load(ID_t id = Default_id) = 0;
+            virtual cv::Mat load(ID_t... id) = 0;
         };
 
         template<typename Annotation_object_t = Annotation_object, typename Image_loader_t = Image_loader<>, typename Source_t = std::string>

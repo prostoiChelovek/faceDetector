@@ -27,7 +27,7 @@ namespace Faces {
 
         class Image_loader_voc : public Image_loader<> {
         public:
-            cv::Mat load(int id = 0) override;
+            cv::Mat load() override;
         };
 
         class Annotation_voc : public Annotation<Annotation_object_voc, Image_loader_voc, std::string> {

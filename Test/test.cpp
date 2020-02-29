@@ -7,8 +7,7 @@
 #include "../Faces.h"
 
 #include "Datasets_new/Dataset_voc.h"
-
-#include "Datasets/Dataset_SoF.h"
+#include "Datasets_new/Dataset_SoF.h"
 
 const std::string config_file = "../config.json";
 
@@ -32,10 +31,13 @@ int find_similar(T_a &a, std::vector<T_b> &bs) {
 }
 
 int main() {
-    auto *test = Faces::Datasets::Dataset_voc::create(
-            "/home/prostoichelovek/Documents/datasets/faces/Caltech/annotations_voc");
-    auto annotation = test->get_annotation(1);
-    cv::Mat img = annotation.images_loader.load();
+    auto *test = Faces::Datasets::Dataset_SoF::create(
+            "/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json",
+            "/home/prostoichelovek/Documents/datasets/faces/sof/images");
+    auto annotation = test->get_annotation(2500);
+    cv::Mat img = annotation.images_loader.load(Faces::Datasets::Occlusion_SoF::EYE_AND_NOSE,
+                                                Faces::Datasets::Image_filters_SoF::NORMAL,
+                                                Faces::Datasets::Difficulty_SoF::EASY);
     annotation.draw(img);
     cv::imshow("test", img);
     cv::waitKey(0);
