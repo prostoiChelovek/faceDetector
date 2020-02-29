@@ -1,80 +1,64 @@
 //
-// Created by prostoichelovek on 19.02.2020.
+// Created by prostoichelovek on 29.02.2020.
 //
 
-/*
 #ifndef FACES_DATASET_H
 #define FACES_DATASET_H
 
 
 #include <string>
-#include <utility>
-#include <vector>
 
 #include <opencv2/opencv.hpp>
 
-#include "pugixml.hpp"
-
-#include "../../utils/utils.hpp"
-
 namespace Faces {
+    namespace Datasets {
 
-    class Annotation_object {
-    public:
-        cv::Rect rect;
-        std::string label;
+        class Annotation_object {
+        public:
+            virtual void draw(cv::Mat &img, const cv::Scalar &color = cv::Scalar(0, 255, 0)) const = 0;
+        };
 
-        Annotation_object() = default;
+        template<class... ID_t>
+        class Image_loader {
+        public:
+            std::string path;
 
-        Annotation_object(cv::Rect rect, std::string label) : rect(rect), label(label) {}
+            Image_loader() = default;
 
-        void draw(cv::Mat &img, const cv::Scalar &color = cv::Scalar(0, 255, 0)) const;
+            explicit Image_loader(const std::string &path) : path(path) {}
 
-        friend std::ostream &operator<<(std::ostream &os, const Annotation_object &a);
-    };
+            virtual cv::Mat load(ID_t... id) = 0;
+        };
 
-    class Annotation {
-    public:
-        std::string annotation_path;
+        template<typename Annotation_object_t = Annotation_object, typename Image_loader_t = Image_loader<>, typename Source_t = std::string>
+        class Annotation {
+        public:
+            std::vector<Annotation_object_t> annotations;
+            Image_loader_t images_loader;
 
-        std::vector<Annotation_object> objects;
-        std::string image_path;
+            Source_t source;
 
-        bool ok = false;
+            explicit Annotation(const Source_t &source) : source(source) {}
 
-        explicit Annotation(const std::string &annotation_path) : annotation_path(annotation_path) {}
+            virtual bool load() = 0;
 
-        Annotation() = default;
+            virtual void draw(cv::Mat &img, const cv::Scalar &color = cv::Scalar(0, 255, 0)) const = 0;
+        };
 
-        bool load();
+        template<typename Annotation_t = Annotation<>>
+        class Dataset {
+        public:
+            int current_num = 1;
 
-        virtual void draw(cv::Mat &img);
+            std::string path;
 
-        explicit operator bool() const;
+            explicit Dataset(const std::string &path) : path(path) {}
 
-        friend std::ostream &operator<<(std::ostream &os, const Annotation &a);
+            virtual Annotation_t get_annotation(int num) = 0;
+        };
 
-    };
-
-    class Dataset {
-    public:
-        int current_file = 1;
-
-        explicit Dataset(const std::string &annotations_directory) : annotations_directory(annotations_directory) {}
-
-        Annotation get_annotation(int num);
-
-        bool get_sample(int num, Annotation &annotation, cv::Mat &img);
-
-        bool get_next(Annotation &annotation, cv::Mat &img);
-
-    private:
-        std::string annotations_directory = "annotations";
-
-    };
-
+    }
 }
 
 
 #endif //FACES_DATASET_H
-*/

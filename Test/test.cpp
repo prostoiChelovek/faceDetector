@@ -6,8 +6,8 @@
 
 #include "../Faces.h"
 
-#include "Datasets_new/Dataset_voc.h"
-#include "Datasets_new/Dataset_SoF.h"
+#include "Datasets/Dataset_voc.h"
+#include "Datasets/Dataset_SoF.h"
 
 const std::string config_file = "../config.json";
 

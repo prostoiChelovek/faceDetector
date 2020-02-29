@@ -1,102 +1,102 @@
 //
-// Created by prostoichelovek on 28.02.2020.
+// Created by prostoichelovek on 29.02.2020.
 //
-/*
+
 #include "Dataset_SoF.h"
 
 namespace Faces {
+    namespace Datasets {
 
-    Annotation_object_SoF::Annotation_object_SoF(const nlohmann::json &obj) {
-        Serialization::fromJson<Annotation_object_SoF>(this, obj);
-    }
+        void Annotation_object_SoF::draw(cv::Mat &img, const cv::Scalar &color) const {
+            cv::rectangle(img, face_roi, color, 2, 4);
+            cv::rectangle(img, cv::Rect(face_roi.x, face_roi.y - 20, face_roi.width, 25),
+                          color, cv::FILLED, 4);
+            cv::putText(img, id, face_roi.tl(),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+            cv::rectangle(img, glasses_roi, color, 1, 4);
 
-    void Annotation_object_SoF::draw(cv::Mat &img, const cv::Scalar &color) const {
-        Annotation_object::draw(img, color);
-
-        cv::rectangle(img, glasses_roi, color, 1, 4);
-        for (const cv::Point &lm : landmarks) {
-            cv::circle(img, lm, 2, color, cv::FILLED);
-        }
-    }
-
-    bool Annotation_SoF::load(const nlohmann::json &obj) {
-        try {
-            Annotation_object_SoF o(obj);
-            objects.emplace_back(o);
-            get_image_path();
-            return true;
-        } catch (std::exception &e) {
-            log(ERROR, "Cannot load annotation from", annotation_path, ":", e.what());
-            return false;
+            for (const cv::Point &lm : landmarks) {
+                cv::circle(img, lm, 2, color, cv::FILLED);
+            }
         }
 
-    }
-
-    void Annotation_SoF::get_image_path() {
-        if(objects.empty()) {
-            return;
-        }
-        Annotation_object_SoF &obj = objects.back();
-        obj.filename.pop_back();
-        std::stringstream filename;
-        filename << obj.filename;
-
-        nlohmann::json tmp_json; // i am too lazy to do conversion somehow else and more efficiently
-        to_json(tmp_json, obj.lightning);
-        filename << std::string(tmp_json) << "_";
-        to_json(tmp_json, obj.view);
-        filename << std::string(tmp_json) << "_";
-        to_json(tmp_json, obj.cropped);
-        filename << std::string(tmp_json) << "_";
-        to_json(tmp_json, obj.emotion);
-        filename << std::string(tmp_json) << "_";
-        filename << obj.year << "_" << obj.part;
-
-        obj.filename = filename.str();
-    }
-
-    Dataset_SoF::Dataset_SoF(const std::string &metadata_path) : Dataset(metadata_path) {
-        std::ifstream ifs(metadata_path);
-        ifs >> metadata_j;
-    }
-
-
-    Dataset_SoF::Annotations_t Dataset_SoF::get_annotation(int num) {
-        Annotations_t res;
-
-        Annotation_SoF a;
-        try {
-            a.load(metadata_j[num]);
-        } catch (std::exception &e) {
-            log(ERROR, "Cannot load annotation with num", num);
-        }
-        return res;
-    }
-
-    bool Dataset_SoF::get_sample(int num, Annotations_t &annotations, std::vector<cv::Mat> &imgs) {
-        annotations = get_annotation(num);
-        if (annotations.empty()) {
-            return false;
+        cv::Mat Image_loader_SoF::load(Occlusion_SoF occlusion, Image_filters_SoF filters, Difficulty_SoF difficulty) {
+            std::string img_path = path + "_";
+            nlohmann::json tmp_json;
+            to_json(tmp_json, occlusion);
+            img_path += std::string(tmp_json);
+            img_path += "_";
+            to_json(tmp_json, filters);
+            img_path += std::string(tmp_json);
+            img_path += "_";
+            to_json(tmp_json, difficulty);
+            img_path += std::string(tmp_json);
+            img_path += ".jpg";
+            return cv::imread(img_path);
         }
 
-        try {
-            //img = cv::imread(annotation.image_path);
-        } catch (std::exception &e) {
-            log(ERROR, "Cannot load image from", annotation.image_path, ":", e.what());
-            return false;
+        bool Annotation_SoF::load() {
+            try {
+                annotations.emplace_back(Serialization::fromJson<Annotation_object_SoF>(source));
+                images_loader.path = images_directory + "/" + get_image_path();
+                return true;
+            } catch (std::exception &e) {
+                log(ERROR, "Cannot load annotation");
+                return false;
+            }
         }
 
-        return true;
-    }
-
-    bool Dataset_SoF::get_next(Annotations_t &annotations, std::vector<cv::Mat> &imgs) {
-        if (!get_sample(current_file, annotations, imgs)) {
-            return false;
+        void Annotation_SoF::draw(cv::Mat &img, const cv::Scalar &color) const {
+            for (const Annotation_object_SoF &obj : annotations) {
+                obj.draw(img, color);
+            }
         }
-        current_file++;
-        return true;
-    }
 
+        std::string Annotation_SoF::get_image_path() {
+            if (annotations.empty()) {
+                return "";
+            }
+            Annotation_object_SoF &obj = annotations.back();
+            obj.filename.pop_back();
+            std::stringstream filename;
+            filename << obj.filename;
+
+            nlohmann::json tmp_json; // i am too lazy to do conversion somehow else and more efficiently
+            to_json(tmp_json, obj.lightning);
+            filename << std::string(tmp_json) << "_";
+            to_json(tmp_json, obj.view);
+            filename << std::string(tmp_json) << "_";
+            to_json(tmp_json, obj.cropped);
+            filename << std::string(tmp_json) << "_";
+            to_json(tmp_json, obj.emotion);
+            filename << std::string(tmp_json) << "_";
+            filename << obj.year << "_" << obj.part;
+
+            return filename.str();
+        }
+
+        Annotation_SoF::Annotation_SoF(const nlohmann::json &source, const std::string &images_directory)
+                : Annotation(source), images_directory(images_directory) {
+        }
+
+        Dataset_SoF::Dataset_SoF(const std::string &metadata_path, const std::string &images_directory)
+                : Dataset(metadata_path), images_directory(images_directory) {
+            std::ifstream ifs(metadata_path);
+            ifs >> metadata;
+            ifs.close();
+        }
+
+        Annotation_SoF Dataset_SoF::get_annotation(int num) {
+            Annotation_SoF res(metadata[num], images_directory);
+            res.load();
+            return res;
+        }
+
+        Dataset<Annotation_SoF> *Dataset_SoF::create(const std::string &path, const std::string &images_directory) {
+            return new Dataset_SoF(path, images_directory);
+        }
+
+    }
 }
 
 namespace cv {
@@ -138,4 +138,3 @@ namespace std {
         }
     }
 }
-*/

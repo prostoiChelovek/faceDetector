@@ -106,5 +106,20 @@ namespace Faces {
     }
 }
 
+namespace cv {
+    void to_json(nlohmann::json &j, const Point &p);
+
+    void from_json(const nlohmann::json &j, Point &p);
+
+    void to_json(nlohmann::json &j, const Rect &p);
+
+    void from_json(const nlohmann::json &j, Rect &p);
+}
+
+namespace std {
+    void to_json(nlohmann::json &j, const vector <cv::Point> &p);
+
+    void from_json(const nlohmann::json &j, vector <cv::Point> &p);
+}
 
 #endif //FACES_SERIALIZATION_HPP
