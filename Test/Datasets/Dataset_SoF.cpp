@@ -8,10 +8,10 @@ namespace Faces {
     namespace Datasets {
 
         void Annotation_object_SoF::draw(cv::Mat &img, const cv::Scalar &color) const {
-            cv::rectangle(img, face_roi, color, 2, 4);
-            cv::rectangle(img, cv::Rect(face_roi.x, face_roi.y - 20, face_roi.width, 25),
+            cv::rectangle(img, rect, color, 2, 4);
+            cv::rectangle(img, cv::Rect(rect.x, rect.y - 20, rect.width, 25),
                           color, cv::FILLED, 4);
-            cv::putText(img, id, face_roi.tl(),
+            cv::putText(img, id, rect.tl(),
                         cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
             cv::rectangle(img, glasses_roi, color, 1, 4);
 
@@ -39,6 +39,7 @@ namespace Faces {
             try {
                 annotations.emplace_back(Serialization::fromJson<Annotation_object_SoF>(source));
                 images_loader.path = images_directory + "/" + get_image_path();
+                ok = true;
                 return true;
             } catch (std::exception &e) {
                 log(ERROR, "Cannot load annotation");

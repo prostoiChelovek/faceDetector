@@ -31,26 +31,14 @@ int find_similar(T_a &a, std::vector<T_b> &bs) {
 }
 
 int main() {
-    auto *test = Faces::Datasets::Dataset_SoF::create(
-            "/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json",
-            "/home/prostoichelovek/Documents/datasets/faces/sof/images");
-    auto annotation = test->get_annotation(2500);
-    cv::Mat img = annotation.images_loader.load(Faces::Datasets::Occlusion_SoF::EYE_AND_NOSE,
-                                                Faces::Datasets::Image_filters_SoF::NORMAL,
-                                                Faces::Datasets::Difficulty_SoF::EASY);
-    annotation.draw(img);
-    cv::imshow("test", img);
-    cv::waitKey(0);
-
-    return EXIT_SUCCESS;
-/*
     Faces::Faces faces(config_file);
     faces.detectFreq = 0;
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
 
-    Faces::Dataset dataset("/home/prostoichelovek/Документы/datasets/faces/dataset_from_dataturks/annotations_voc");
-
+    auto *dataset = Faces::Datasets::Dataset_SoF::create(
+            "/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json",
+            "/home/prostoichelovek/Documents/datasets/faces/sof/images");
     int not_detected = 0;
     int false_detected = 0;
     int detected = 0;
@@ -58,10 +46,17 @@ int main() {
 
     float time = 0;
 
-    Faces::Annotation annotation;
     cv::Mat img, img2;
 
-    while (dataset.get_next(annotation, img)) {
+    for (int i = 1; i < 1000; i++) {
+        auto annotation = dataset->get_annotation(i);
+        img = annotation.images_loader.load(Faces::Datasets::Occlusion_SoF::EYE,
+                                            Faces::Datasets::Image_filters_SoF::NORMAL,
+                                            Faces::Datasets::Difficulty_SoF::ORIGINAL);
+        if (!annotation.ok || img.empty()) {
+            break;
+        }
+
         bool ok = true;
 
         img.copyTo(img2);
@@ -79,9 +74,9 @@ int main() {
 
         for (int i = 0; i < faces.detector.faces.size(); i++) {
             Faces::Face &f = faces.detector.faces[i];
-            int similar_id = find_similar(f, annotation.objects);
+            int similar_id = find_similar(f, annotation.annotations);
             if (similar_id != -1) {
-                Faces::Annotation_object &similar = annotation.objects[similar_id];
+                auto &similar = annotation.annotations[similar_id];
                 pairs.emplace_back(std::make_pair(i, similar_id));
 
                 f.draw(img2, &faces.recognition.labels, cv::Scalar(0, 255, 0));
@@ -95,7 +90,7 @@ int main() {
             }
         }
 
-        for (auto &a : annotation.objects) {
+        for (auto &a : annotation.annotations) {
             int similar_id = find_similar(a, faces.detector.faces);
             if (similar_id != -1) {
                 a.draw(img, cv::Scalar(0, 255, 0));
@@ -113,7 +108,7 @@ int main() {
 
         for (const auto &p : pairs) {
             Faces::Face &f = faces.detector.faces[p.first];
-            Faces::Annotation_object &similar = annotation.objects[p.second];
+            auto &similar = annotation.annotations[p.second];
             cv::Point a_pt(similar.rect.x + similar.rect.width, similar.rect.y + similar.rect.height / 2);
             cv::Point b_pt(image_width + f.rect.x, f.rect.y + f.rect.height / 2);
             cv::line(img, a_pt, b_pt, cv::Scalar(0, 255, 255), 2);
@@ -139,5 +134,4 @@ int main() {
 
 
     return EXIT_SUCCESS;
-    */
 }

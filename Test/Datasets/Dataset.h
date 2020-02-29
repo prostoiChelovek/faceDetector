@@ -36,6 +36,8 @@ namespace Faces {
             std::vector<Annotation_object_t> annotations;
             Image_loader_t images_loader;
 
+            bool ok = false;
+
             Source_t source;
 
             explicit Annotation(const Source_t &source) : source(source) {}

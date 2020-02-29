@@ -49,6 +49,7 @@ namespace Faces {
                 return false;
             }
 
+            ok = true;
             return true;
         }
 

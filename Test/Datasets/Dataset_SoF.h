@@ -37,7 +37,7 @@ namespace Faces {
             bool headscarf, illumination;
             std::vector<cv::Point> landmarks;
             std::vector<bool> estimated_landmarks;
-            cv::Rect face_roi, glasses_roi;
+            cv::Rect rect, glasses_roi;
             enum Cropped {
                 YES, NOT
             } cropped;
@@ -74,7 +74,7 @@ namespace Faces {
                     Serialization::property(&Annotation_object_SoF::filename, "/filename"),
                     Serialization::property(&Annotation_object_SoF::landmarks, "/landmarks"),
                     Serialization::property(&Annotation_object_SoF::estimated_landmarks, "/estimated_landmarks"),
-                    Serialization::property(&Annotation_object_SoF::face_roi, "/face_ROI"),
+                    Serialization::property(&Annotation_object_SoF::rect, "/face_ROI"),
                     Serialization::property(&Annotation_object_SoF::glasses_roi, "/glasses_ROI")
             );
 
