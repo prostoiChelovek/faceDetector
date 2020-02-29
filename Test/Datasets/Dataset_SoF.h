@@ -2,10 +2,13 @@
 // Created by prostoichelovek on 28.02.2020.
 //
 
+/*
+
 #ifndef FACES_DATASET_SOF_H
 #define FACES_DATASET_SOF_H
 
 
+#include <sstream>
 #include <nlohmann/json.hpp>
 
 #include "Dataset.h"
@@ -15,14 +18,29 @@
 
 namespace Faces {
 
+    enum Occlusion_SoF {
+        EYE, EYE_AND_NOSE, EYE_AND_MOUTH
+    };
+
+    enum Image_filters_SoF {
+        NORMAL, NOISE, SMOOTH, POSTERIZE
+    };
+
+    enum Difficulty_SoF {
+        ORIGINAL, EASY, MEDIUM, HARD
+    };
+
     class Annotation_object_SoF : public Annotation_object {
     public:
         std::string seq, part, filename;
         int year, age;
-        bool cropped, headscarf, illumination;
+        bool headscarf, illumination;
         std::vector<cv::Point> landmarks;
         std::vector<bool> estimated_landmarks;
         cv::Rect glasses_roi;
+        enum Cropped {
+            YES, NOT
+        } cropped;
         enum Gender {
             MALE, FEMALE
         } gender;
@@ -70,28 +88,59 @@ namespace Faces {
     public:
         std::vector<Annotation_object_SoF> objects;
 
+        using Image_paths_t = std::pair<std::tuple<Occlusion_SoF, Image_filters_SoF, Difficulty_SoF>, std::string>;
+        Image_paths_t image_path;
+
         bool load() = delete;
 
         bool load(const nlohmann::json &obj);
 
+    private:
+        void get_image_path();
     };
 
     class Dataset_SoF : public Dataset {
     public:
+        using Annotations_t = std::map<std::tuple<Occlusion_SoF, Image_filters_SoF, Difficulty_SoF>, Annotation_SoF>;
+
         explicit Dataset_SoF(const std::string &metadata_path);
 
-        Annotation_SoF get_annotation(int num);
+        Annotations_t get_annotation(int num);
 
-        bool get_sample(int num, Annotation_SoF &annotation, cv::Mat &img);
+        bool get_sample(int num, Annotations_t &annotations, std::vector<cv::Mat> &imgs);
 
-        bool get_next(Annotation_SoF &annotation, cv::Mat &img);
-
+        bool get_next(Annotations_t &annotations, std::vector<cv::Mat> &img);
 
     private:
         nlohmann::json metadata_j;
     };
 
     // Serialization stuff ->
+    NLOHMANN_JSON_SERIALIZE_ENUM(Occlusion_SoF , {
+        { Occlusion_SoF::EYE, "e0" },
+        { Occlusion_SoF::EYE_AND_NOSE, "en" },
+        { Occlusion_SoF::EYE_AND_MOUTH, "em" }
+    })
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(Image_filters_SoF , {
+        { Image_filters_SoF::NORMAL, "nl" },
+        { Image_filters_SoF::NOISE, "Gn" },
+        { Image_filters_SoF::SMOOTH, "Gs" },
+        { Image_filters_SoF::POSTERIZE, "Ps" }
+    })
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(Difficulty_SoF , {
+        { Difficulty_SoF::ORIGINAL, "o" },
+        { Difficulty_SoF::EASY, "e" },
+        { Difficulty_SoF::MEDIUM, "m" },
+        { Difficulty_SoF::HARD, "h" }
+    })
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(Annotation_object_SoF::Cropped , {
+        { Annotation_object_SoF::Cropped::YES, "cr" },
+        { Annotation_object_SoF::Cropped::NOT, "nc" }
+    })
+
     NLOHMANN_JSON_SERIALIZE_ENUM(Annotation_object_SoF::Gender, {
         { Annotation_object_SoF::Gender::MALE, "m" },
         { Annotation_object_SoF::Gender::FEMALE, "f" }
@@ -103,15 +152,15 @@ namespace Faces {
     })
 
     NLOHMANN_JSON_SERIALIZE_ENUM(Annotation_object_SoF::View, {
-        { Annotation_object_SoF::View::FRONT, "f" },
-        { Annotation_object_SoF::View::NEAR_FRONT, "n" }
+        { Annotation_object_SoF::View::FRONT, "fr" },
+        { Annotation_object_SoF::View::NEAR_FRONT, "nf" }
     })
 
     NLOHMANN_JSON_SERIALIZE_ENUM(Annotation_object_SoF::Emotion, {
-        { Annotation_object_SoF::Emotion::NORMAL, 1 },
-        { Annotation_object_SoF::Emotion::HAPPY, 2 },
-        { Annotation_object_SoF::Emotion::SAD, 3 },
-        { Annotation_object_SoF::Emotion::SURPRISED, 4 }
+        { Annotation_object_SoF::Emotion::NORMAL, "no" },
+        { Annotation_object_SoF::Emotion::HAPPY, "hp" },
+        { Annotation_object_SoF::Emotion::SAD, "sd" },
+        { Annotation_object_SoF::Emotion::SURPRISED, "sr" }
     })
 
     NLOHMANN_JSON_SERIALIZE_ENUM(Annotation_object_SoF::Glasses, {
@@ -143,3 +192,4 @@ namespace std {
 // <- Serialization stuff
 
 #endif //FACES_DATASET_SOF_H
+*/

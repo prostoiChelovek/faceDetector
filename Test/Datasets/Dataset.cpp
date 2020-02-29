@@ -1,7 +1,7 @@
 //
 // Created by prostoichelovek on 19.02.2020.
 //
-
+/*
 #include "Dataset.h"
 #include "Dataset_SoF.h"
 
@@ -112,3 +112,4 @@ bool Faces::Dataset::get_next(Annotation &annotation, cv::Mat &img) {
     current_file++;
     return true;
 }
+*/

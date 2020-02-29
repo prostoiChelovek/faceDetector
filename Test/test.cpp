@@ -6,7 +6,7 @@
 
 #include "../Faces.h"
 
-#include "Datasets/Dataset.h"
+#include "Datasets_new/Dataset_voc.h"
 
 #include "Datasets/Dataset_SoF.h"
 
@@ -32,15 +32,20 @@ int find_similar(T_a &a, std::vector<T_b> &bs) {
 }
 
 int main() {
+    auto *test = Faces::Datasets::Dataset_voc::create(
+            "/home/prostoichelovek/Documents/datasets/faces/Caltech/annotations_voc");
+    auto annotation = test->get_annotation(1);
+    cv::Mat img = annotation.images_loader.load();
+    annotation.draw(img);
+    cv::imshow("test", img);
+    cv::waitKey(0);
+
+    return EXIT_SUCCESS;
+/*
     Faces::Faces faces(config_file);
     faces.detectFreq = 0;
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
-
-    Faces::Dataset_SoF test("/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json");
-    Faces::Annotation_SoF a;
-    cv::Mat img_test;
-    test.get_sample(1, a, img_test);
 
     Faces::Dataset dataset("/home/prostoichelovek/Документы/datasets/faces/dataset_from_dataturks/annotations_voc");
 
@@ -112,9 +117,9 @@ int main() {
             cv::line(img, a_pt, b_pt, cv::Scalar(0, 255, 255), 2);
         }
 
-        /*if(img.cols > 900 || img.rows > 1300) {
+        if(img.cols > 900 || img.rows > 1300) {
             cv::resize(img, img, cv::Size(img.cols / 1.5, img.rows / 1.5));
-        }*/
+        }
 
         if (!ok) {
             cv::imwrite("../Test/fails/" + std::to_string(total) + ".jpg", img);
@@ -132,4 +137,5 @@ int main() {
 
 
     return EXIT_SUCCESS;
+    */
 }

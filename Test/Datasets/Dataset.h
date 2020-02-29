@@ -2,6 +2,7 @@
 // Created by prostoichelovek on 19.02.2020.
 //
 
+/*
 #ifndef FACES_DATASET_H
 #define FACES_DATASET_H
 
@@ -76,3 +77,4 @@ namespace Faces {
 
 
 #endif //FACES_DATASET_H
+*/

@@ -31,7 +31,7 @@ target_link_libraries(faces dlib)
 add_executable(run main.cpp)
 target_link_libraries(run faces)
 
-add_executable(test Test/test.cpp Test/Datasets/Dataset.h Test/Datasets/Dataset.cpp Test/Datasets/Dataset_SoF.cpp Test/Datasets/Dataset_SoF.h)
+add_executable(test Test/test.cpp Test/Datasets_new/Dataset.h Test/Datasets_new/Dataset_voc.h Test/Datasets_new/Dataset_voc.cpp)
 add_subdirectory(modules/pugixml)
 target_link_libraries(test pugixml)
 target_link_libraries(test faces)

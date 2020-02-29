@@ -1,7 +1,7 @@
 //
 // Created by prostoichelovek on 28.02.2020.
 //
-
+/*
 #include "Dataset_SoF.h"
 
 namespace Faces {
@@ -23,10 +23,36 @@ namespace Faces {
         try {
             Annotation_object_SoF o(obj);
             objects.emplace_back(o);
+            get_image_path();
+            return true;
         } catch (std::exception &e) {
             log(ERROR, "Cannot load annotation from", annotation_path, ":", e.what());
             return false;
         }
+
+    }
+
+    void Annotation_SoF::get_image_path() {
+        if(objects.empty()) {
+            return;
+        }
+        Annotation_object_SoF &obj = objects.back();
+        obj.filename.pop_back();
+        std::stringstream filename;
+        filename << obj.filename;
+
+        nlohmann::json tmp_json; // i am too lazy to do conversion somehow else and more efficiently
+        to_json(tmp_json, obj.lightning);
+        filename << std::string(tmp_json) << "_";
+        to_json(tmp_json, obj.view);
+        filename << std::string(tmp_json) << "_";
+        to_json(tmp_json, obj.cropped);
+        filename << std::string(tmp_json) << "_";
+        to_json(tmp_json, obj.emotion);
+        filename << std::string(tmp_json) << "_";
+        filename << obj.year << "_" << obj.part;
+
+        obj.filename = filename.str();
     }
 
     Dataset_SoF::Dataset_SoF(const std::string &metadata_path) : Dataset(metadata_path) {
@@ -35,24 +61,26 @@ namespace Faces {
     }
 
 
-    Annotation_SoF Dataset_SoF::get_annotation(int num) {
+    Dataset_SoF::Annotations_t Dataset_SoF::get_annotation(int num) {
+        Annotations_t res;
+
         Annotation_SoF a;
         try {
             a.load(metadata_j[num]);
         } catch (std::exception &e) {
             log(ERROR, "Cannot load annotation with num", num);
         }
-        return a;
+        return res;
     }
 
-    bool Dataset_SoF::get_sample(int num, Annotation_SoF &annotation, cv::Mat &img) {
-        annotation = get_annotation(num);
-        if (!annotation) {
+    bool Dataset_SoF::get_sample(int num, Annotations_t &annotations, std::vector<cv::Mat> &imgs) {
+        annotations = get_annotation(num);
+        if (annotations.empty()) {
             return false;
         }
 
         try {
-            img = cv::imread(annotation.image_path);
+            //img = cv::imread(annotation.image_path);
         } catch (std::exception &e) {
             log(ERROR, "Cannot load image from", annotation.image_path, ":", e.what());
             return false;
@@ -61,8 +89,8 @@ namespace Faces {
         return true;
     }
 
-    bool Dataset_SoF::get_next(Annotation_SoF &annotation, cv::Mat &img) {
-        if (!get_sample(current_file, annotation, img)) {
+    bool Dataset_SoF::get_next(Annotations_t &annotations, std::vector<cv::Mat> &imgs) {
+        if (!get_sample(current_file, annotations, imgs)) {
             return false;
         }
         current_file++;
@@ -110,3 +138,4 @@ namespace std {
         }
     }
 }
+*/

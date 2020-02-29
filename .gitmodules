@@ -1,3 +1,3 @@
-[submodule "Test/pugixml"]
+[submodule "modules/pugixml"]
 	path = modules/pugixml
 	url = git@github.com:zeux/pugixml.git
