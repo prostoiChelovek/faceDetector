@@ -42,7 +42,7 @@ namespace Faces {
                 ok = true;
                 return true;
             } catch (std::exception &e) {
-                log(ERROR, "Cannot load annotation: ", e.what());
+//                log(ERROR, "Cannot load annotation: ", e.what());
                 return false;
             }
         }

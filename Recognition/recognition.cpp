@@ -71,21 +71,31 @@ namespace Faces {
             }
         }
 
-        void recognition::train(std::string samplesDir) {
+        void recognition::train(std::string samplesDir, int persons_limit, int samples_limit) {
             std::map<std::string, int> files = getSamples(samplesDir);
 
             std::vector<descriptor_type> descriptors;
             std::vector<int> labels;
 
             // Read samples ->
+            int num_files = 0;
             for (auto &file : files) {
+                if (num_files > persons_limit && persons_limit > 0) {
+                    break;
+                }
                 std::ifstream descFS(samplesDir + "/" + file.first);
 
+                int num_samples = 0;
                 std::vector<std::string> lines;
                 std::string str;
                 while (getline(descFS, str)) {
-                    if (!str.empty())
+                    if (num_samples > samples_limit && samples_limit > 0) {
+                        break;
+                    }
+                    if (!str.empty()) {
                         lines.push_back(str);
+                        num_samples++;
+                    }
                 }
 
                 std::vector<std::vector<double>> descs;
@@ -109,6 +119,7 @@ namespace Faces {
                     labels.emplace_back(file.second);
                     descriptors.emplace_back(dlib::mat(desc));
                 }
+                num_files++;
             }
 
             // <- Read samples

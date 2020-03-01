@@ -48,7 +48,7 @@ namespace Faces {
 
             ~recognition();
 
-            void train(std::string samplesDir);
+            void train(std::string samplesDir, int persons_limit = 0, int samples_limit = 0);
 
             bool save(std::string file);
 
