@@ -36,9 +36,8 @@ int main() {
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
 
-    auto *dataset = Faces::Datasets::Dataset_SoF::create(
-            "/home/prostoichelovek/Documents/datasets/faces/sof/metadata/metadata.json",
-            "/home/prostoichelovek/Documents/datasets/faces/sof/images");
+    auto *dataset = Faces::Datasets::Dataset_voc::create(
+            "/home/prostoichelovek/Documents/datasets/faces/dataset_from_dataturks/annotations_voc");
     int not_detected = 0;
     int false_detected = 0;
     int detected = 0;
@@ -50,9 +49,7 @@ int main() {
 
     for (int i = 1; i < 1000; i++) {
         auto annotation = dataset->get_annotation(i);
-        img = annotation.images_loader.load(Faces::Datasets::Occlusion_SoF::EYE,
-                                            Faces::Datasets::Image_filters_SoF::NORMAL,
-                                            Faces::Datasets::Difficulty_SoF::ORIGINAL);
+        img = annotation.images_loader.load();
         if (!annotation.ok || img.empty()) {
             break;
         }

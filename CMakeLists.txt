@@ -31,7 +31,13 @@ target_link_libraries(faces dlib)
 add_executable(run main.cpp)
 target_link_libraries(run faces)
 
-add_executable(test Test/test.cpp Test/Datasets/Dataset.h Test/Datasets/Dataset_voc.h Test/Datasets/Dataset_voc.cpp Test/Datasets/Dataset_SoF.cpp Test/Datasets/Dataset_SoF.h)
+add_library(datasets STATIC Test/Datasets/Dataset.h Test/Datasets/Dataset_voc.h Test/Datasets/Dataset_voc.cpp Test/Datasets/Dataset_SoF.cpp Test/Datasets/Dataset_SoF.h)
 add_subdirectory(modules/pugixml)
-target_link_libraries(test pugixml)
-target_link_libraries(test faces)
+target_link_libraries(datasets pugixml)
+target_link_libraries(datasets faces)
+
+add_executable(detection_test Test/detection.cpp)
+target_link_libraries(detection_test datasets)
+
+add_executable(recognition_test Test/recognition.cpp)
+target_link_libraries(recognition_test datasets)

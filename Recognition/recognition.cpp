@@ -94,7 +94,10 @@ namespace Faces {
                     std::vector<std::string> nums = split(line, " ");
                     for (std::string &num : nums) {
                         try {
-                            descs[descs.size() - 1].emplace_back(stod(num));
+                            std::istringstream os(num);
+                            double d;
+                            os >> d;
+                            descs[descs.size() - 1].emplace_back(d);
                         } catch (std::exception &e) {
                             log(ERROR, "Cannot read face descriptor from", file.first, ":", e.what());
                             continue;
