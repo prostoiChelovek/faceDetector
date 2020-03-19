@@ -22,7 +22,8 @@
 #include "../Face/Face.h"
 #include "../Callbacks.hpp"
 #include "../Detection/Detection.h"
-#include "RecognitionNet.hpp"
+
+#include "../modules/facenet_classifier/src/facenet_tf.h"
 
 namespace Faces {
     namespace Recognition {
@@ -40,8 +41,6 @@ namespace Faces {
             int minLabelNotChanged = 5;
 
             Callbacks *callbacks;
-
-            bool ok = false;
 
             explicit recognition(Callbacks *callbacks, cv::Size faceSize,
                                  std::string classifierFile, std::string descriptorFile);
@@ -72,9 +71,7 @@ namespace Faces {
             std::ofstream labelsFs;
 
             // DNN that estimates 128D face descriptors
-            anet_type descriptor;
-
-            std::vector<MyClassifier> classifiers;
+            Facenet::FacenetClassifier<cv::ml::ANN_MLP> descriptor;
 
         };
 

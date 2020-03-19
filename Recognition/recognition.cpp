@@ -9,8 +9,7 @@ namespace Faces {
 
         recognition::recognition(Callbacks *callbacks, cv::Size faceSize,
                                  std::string classifierFile, std::string descriptorFile)
-                : callbacks(callbacks), faceSize(faceSize) {
-            load(classifierFile, descriptorFile);
+                : callbacks(callbacks), faceSize(faceSize), descriptor(descriptorFile, classifierFile) {
         }
 
         recognition::~recognition() {
@@ -29,27 +28,14 @@ namespace Faces {
         }
 
         void recognition::recognize(Face &face) {
-            if (!ok)
-                return;
-
             face.minLabelNotChanged = minLabelNotChanged;
 
             getDescriptors(face);
 
-            std::map<double, int> votes;
-            for (auto &faceClassifier : classifiers) {
-                double prediction = faceClassifier(face.descriptor, threshold);
-                if (prediction == -1)
-                    continue;
-                votes[prediction]++;
-            }
+            if (!descriptor.classifier.ok)
+                return;
 
-            auto max = std::max_element(votes.begin(), votes.end(),
-                                        [](const std::pair<int, int> &p1, const std::pair<int, int> &p2) {
-                                            return p1.second < p2.second;
-                                        });
-
-            int label = votes.empty() ? -1 : max->first;
+            float label = descriptor.classifier.predict(face.descriptor);
             face.setLabel(label);
 
             if (callbacks != nullptr) {
@@ -74,7 +60,7 @@ namespace Faces {
         void recognition::train(std::string samplesDir, int persons_limit, int samples_limit) {
             std::map<std::string, int> files = getSamples(samplesDir);
 
-            std::vector<descriptor_type> descriptors;
+            cv::Mat samples;
             std::vector<int> labels;
 
             // Read samples ->
@@ -83,131 +69,46 @@ namespace Faces {
                 if (num_files > persons_limit && persons_limit > 0) {
                     break;
                 }
-                std::ifstream descFS(samplesDir + "/" + file.first);
 
-                int num_samples = 0;
-                std::vector<std::string> lines;
-                std::string str;
-                while (getline(descFS, str)) {
-                    if (num_samples > samples_limit && samples_limit > 0) {
-                        break;
-                    }
-                    if (!str.empty()) {
-                        lines.push_back(str);
-                        num_samples++;
-                    }
+                cv::FileStorage fs(samplesDir + "/" + file.first, cv::FileStorage::READ);
+                if (!fs.isOpened()) {
+                    log(ERROR, "Cannot open samples file", file.first, ", skipping it");
+                    continue;
+                }
+                cv::Mat descriptors;
+                fs["descriptors"] >> descriptors;
+                fs.release();
+
+                if (samples.empty()) {
+                    samples = descriptors;
+                } else {
+                    cv::vconcat(samples, descriptors, samples);
                 }
 
-                std::vector<std::vector<double>> descs;
-                for (std::string &line : lines) {
-                    descs.emplace_back(std::vector<double>{});
-                    std::vector<std::string> nums = split(line, " ");
-                    for (std::string &num : nums) {
-                        try {
-                            std::istringstream os(num);
-                            double d;
-                            os >> d;
-                            descs[descs.size() - 1].emplace_back(d);
-                        } catch (std::exception &e) {
-                            log(ERROR, "Cannot read face descriptor from", file.first, ":", e.what());
-                            continue;
-                        }
-                    }
-                }
-
-                for (std::vector<double> &desc : descs) {
+                for (int i = 0; i < samples.rows; i++) {
                     labels.emplace_back(file.second);
-                    descriptors.emplace_back(dlib::mat(desc));
                 }
+
                 num_files++;
             }
-
             // <- Read samples
 
-            // Unique labels ->
-            std::vector<int> total_labels;
-            for (int &label : labels) {
-                if (find(total_labels.begin(), total_labels.end(), label) == total_labels.end())
-                    total_labels.emplace_back(label);
-            }
-            // <- Unique labels
-
-            // Init trainers ->
-
-            std::vector<trainer_type> trainers;
-            unsigned long num_trainers = total_labels.size() * (total_labels.size() - 1) / 2;
-
-            for (int i = 0; i < num_trainers; i++) {
-                trainers.emplace_back(trainer_type());
-                trainers[i].set_kernel(kernel_type());
-                trainers[i].set_c(10);
-            }
-
-            // <- Init trainers
-
-            // Train and init classifiers ->
-
-            int label1 = 0, label2 = 1;
-            for (trainer_type &trainer : trainers) {
-                std::vector<descriptor_type> samples4pair;
-                std::vector<double> labels4pair;
-
-                for (int i = 0; i < descriptors.size(); i++) {
-                    if (labels[i] == total_labels[label1]) {
-                        samples4pair.emplace_back(descriptors[i]);
-                        labels4pair.emplace_back(-1);
-                    }
-                    if (labels[i] == total_labels[label2]) {
-                        samples4pair.emplace_back(descriptors[i]);
-                        labels4pair.emplace_back(+1);
-                    }
-                }
-
-                classifiers.emplace_back(total_labels[label1],
-                                         total_labels[label2],
-                                         trainer.train(samples4pair, labels4pair));
-
-                label2++;
-                if (label2 == total_labels.size()) {
-                    label1++;
-                    label2 = label1 + 1;
-                }
-            }
-
-            // <- Train and init classifiers
+            descriptor.classifier.train(samples, labels);
         }
 
         void recognition::getDescriptors(Face &face) {
-            dlib::cv_image<dlib::rgb_pixel> faceImg;
-            cv::Mat rgbImg;
-            cv::cvtColor(face.img, rgbImg, cv::COLOR_BGR2RGB);
-            faceImg = dlib::cv_image<dlib::rgb_pixel>(rgbImg);
-
-            std::vector<dlib::matrix<float, 0, 1>> face_descriptorsF =
-                    descriptor(std::vector<dlib::cv_image<dlib::rgb_pixel>>{faceImg});
-            std::vector<descriptor_type> face_descriptors;
-            for (auto &desc : face_descriptorsF) {
-                std::vector<double> descVec;
-                for (unsigned int r = 0; r < desc.nr(); r += 1) {
-                    descVec.emplace_back(desc(r, 0));
-                }
-                face_descriptors.emplace_back(dlib::mat(descVec));
-            }
-
-            face.descriptor = face_descriptors[0];
+            cv::Mat img_copy = face.img;
+            descriptor.preprocess_input_mat(img_copy);
+            tensorflow::Tensor input_tensor = descriptor.create_input_tensor(img_copy);
+            tensorflow::Tensor phase_tensor = descriptor.create_phase_tensor();
+            log(INFO, input_tensor.DebugString());
+            cv::Mat output = descriptor.run(input_tensor, phase_tensor);
+            face.descriptor = output;
         }
 
         void recognition::load(std::string classifierFile, std::string descriptorFile) {
-            try {
-                dlib::deserialize(classifierFile) >> classifiers;
-                dlib::deserialize(descriptorFile) >> descriptor;
-                ok = true;
-            } catch (dlib::serialization_error &e) {
-                log(ERROR, "Cannot read load classifier or descriptor from", classifierFile,
-                    "and", descriptorFile, ":\n", e.what());
-            }
-            if (classifiers.empty()) {
-                ok = false;
+            descriptor.classifier.load(classifierFile);
+            if (!descriptor.classifier.ok) {
                 log(ERROR, "Cannot read classifiers from", classifierFile);
             }
         }
@@ -221,17 +122,11 @@ namespace Faces {
         }
 
         bool recognition::save(std::string file) {
-            try {
-                dlib::serialize(file) << classifiers;
-                return true;
-            } catch (dlib::serialization_error &e) {
-                log(ERROR, "Cannot save face descriptor classifiers to", file, ":", e.what());
-                return false;
-            }
+            descriptor.classifier.save(file);
         }
 
         std::map<std::string, int> recognition::getSamples(std::string dir) {
-            std::vector<std::string> names = list_directory(dir, "csv");
+            std::vector<std::string> names = list_directory(dir, "yml");
 
             std::map<std::string, int> samples;
 
@@ -248,18 +143,21 @@ namespace Faces {
 
         std::string recognition::addSample(std::string storage, Face &face) {
             createDirNotExists(storage);
-            std::string path = storage + "/" + std::to_string(currentLabel) + ".csv";
+            std::string path = storage + "/" + std::to_string(currentLabel) + ".yml";
 
-            std::ofstream descFs(path, std::ios::app);
-            std::stringstream descSS;
-            for (double d : face.descriptor) {
-                descSS << d << " ";
+            cv::FileStorage fs(path, cv::FileStorage::READ);
+            cv::Mat samples;
+            if (fs.isOpened()) {
+                fs["descriptors"] >> samples;
             }
-            std::string descStr = descSS.str();
-            descStr.pop_back();
-
-            descFs << descStr << std::endl;
-            descFs.flush();
+            fs.open(path, cv::FileStorage::WRITE);
+            log(INFO, face.descriptor);
+            if (!samples.empty()) {
+                cv::vconcat(samples, face.descriptor, samples);
+            } else {
+                samples = face.descriptor;
+            }
+            fs << "descriptors" << samples;
 
             imgNum[currentLabel]++;
             return path;

@@ -21,15 +21,18 @@ find_package(nlohmann_json REQUIRED)
 set(SOURCE_FILES Detection/Detection.cpp Detection/Detection.h utils/utils.hpp Face/Face.cpp Face/Face.h Callbacks.hpp Recognition/recognition.cpp Recognition/recognition.h Faces.cpp Faces.h Recognition/MyClassifier.hpp Recognition/RecognitionNet.hpp FaceChecker.cpp FaceChecker.h utils/Config.cpp utils/Config.h utils/Serialization.hpp)
 add_library(faces STATIC ${SOURCE_FILES})
 
+add_subdirectory(modules/facenet_classifier/src)
+
 target_link_libraries(faces ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(faces ${OpenCV_LIBS})
 target_link_libraries(faces nlohmann_json::nlohmann_json)
+target_link_libraries(faces facenet)
 
 add_subdirectory(${DLIB_PATH} dlib_build)
 target_link_libraries(faces dlib)
 
-add_executable(run main.cpp)
-target_link_libraries(run faces)
+add_executable(example main.cpp)
+target_link_libraries(example faces)
 
 add_library(datasets STATIC Test/Datasets/Dataset.h Test/Datasets/Dataset_voc.h Test/Datasets/Dataset_voc.cpp Test/Datasets/Dataset_SoF.cpp Test/Datasets/Dataset_SoF.h)
 add_subdirectory(modules/pugixml)

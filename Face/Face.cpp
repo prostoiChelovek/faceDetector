@@ -40,6 +40,7 @@ namespace Faces {
             executedCallbacks = last->executedCallbacks;
             offset.x = rect.x - last->rect.x;
             offset.y = rect.y - last->rect.y;
+            descriptor = last->descriptor;
         }
     }
 

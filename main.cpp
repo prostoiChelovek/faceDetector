@@ -90,6 +90,10 @@ int main(int argc, const char **argv) {
 
         faces(img);
 
+        for (const auto &f : faces.detector.faces) {
+            log(INFO, f.descriptor);
+        }
+
         faces.draw(img);
         putText(img, format("FPS = %i", fps), Point(5, 25), FONT_HERSHEY_SIMPLEX, 0.8,
                 Scalar(0, 0, 255), 2);

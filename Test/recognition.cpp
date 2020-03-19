@@ -160,7 +160,6 @@ void test_numbers(T *dataset, std::vector<T_a> &annotations, Faces::Faces &faces
             log_fs << "-----------------" << std::endl;
         }
     }
-
 }
 
 int main(int argc, char **argv) {
@@ -218,7 +217,7 @@ int main(int argc, char **argv) {
                 const auto &filter_difficulty = occlision_params.second[j];
                 for (int k = 0; k < filter_difficulty.first.size(); k++) {
                     filters = filter_difficulty.first[k];
-                    for (int l = 0; l < filter_difficulty.second.size(); l++) {
+                    for (int l = 1; l < filter_difficulty.second.size(); l++) {
                         difficulty = filter_difficulty.second[l];
 
                         nlohmann::json tmp_json;

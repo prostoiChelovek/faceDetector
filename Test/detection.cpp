@@ -36,7 +36,7 @@ int main() {
     faces.recognition.minLabelNotChanged = 0;
     faces.recognizeFreq = 0;
 
-    auto *dataset = Faces::Datasets::Dataset_voc::create(
+    Faces::Datasets::Dataset *dataset = Faces::Datasets::Dataset_voc::create(
             "/home/prostoichelovek/Documents/datasets/faces/dataset_from_dataturks/annotations_voc");
     int not_detected = 0;
     int false_detected = 0;
