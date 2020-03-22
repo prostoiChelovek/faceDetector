@@ -62,6 +62,7 @@ void add_samples(T *dataset, Faces::Faces &faces, std::vector<T_a> &annotations)
     int j = 0;
     for (auto &a : annotations) {
         auto a_obj = a.annotations.back();
+        log(INFO, a_obj.id);
         faces.recognition.addLabel(a_obj.id);
 
         for (auto &annotation : get_annotations_for<Annotation_SoF>(dataset, a_obj.id, num_train_samples)) {

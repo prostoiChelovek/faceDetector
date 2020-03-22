@@ -101,7 +101,6 @@ namespace Faces {
             descriptor.preprocess_input_mat(img_copy);
             tensorflow::Tensor input_tensor = descriptor.create_input_tensor(img_copy);
             tensorflow::Tensor phase_tensor = descriptor.create_phase_tensor();
-            log(INFO, input_tensor.DebugString());
             cv::Mat output = descriptor.run(input_tensor, phase_tensor);
             face.descriptor = output;
         }

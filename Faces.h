@@ -36,7 +36,7 @@ namespace Faces {
     public:
         Config cfg;
 
-        cv::Size faceSize = cv::Size(150, 150);
+        cv::Size faceSize = cv::Size(160, 160);
 
         Callbacks callbacks;
         Detection detector;
