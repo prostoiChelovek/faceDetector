@@ -7,24 +7,27 @@
 namespace Faces {
     namespace Recognition {
 
-        recognition::recognition(Callbacks *callbacks, cv::Size faceSize,
-                                 std::string classifierFile, std::string descriptorFile)
+        recognition::recognition(Callbacks *callbacks, cv::Size faceSize, std::string classifierFile,
+                                 std::string descriptorFile, const std::string &labels_file)
                 : callbacks(callbacks), faceSize(faceSize), descriptor(descriptorFile, classifierFile) {
+            if (!labels_file.empty()) {
+                labelsFs = std::fstream(labels_file, std::ios::in | std::ios::app);
+            }
         }
 
         recognition::~recognition() {
             labelsFs.close();
         }
 
-        bool recognition::readLabels(std::string file) {
-            if (!getFileContent(file, labels))
+        bool recognition::readLabels(const std::string &file) {
+            if (!labelsFs && !file.empty() && !(labelsFs.open(file, std::ios::in | std::ios::app), !labelsFs)) {
+                log(ERROR, "Cannot not open labels file", file);
                 return false;
-            labelsFs = std::ofstream(file, std::ios::app);
-            if (!labelsFs) {
-                log(ERROR, "Could not open labels file for write", file);
+            } else if (file.empty()) {
+                log(ERROR, "Labels file is not opened and empty file parameter passed");
                 return false;
             }
-            return true;
+            return getFileContent(labelsFs, labels);
         }
 
         void recognition::recognize(Face &face) {
@@ -57,15 +60,18 @@ namespace Faces {
             }
         }
 
-        void recognition::train(std::string samplesDir, int persons_limit, int samples_limit) {
+        std::vector<int> recognition::train(std::string samplesDir, int persons_limit, int samples_limit) {
             std::map<std::string, int> files = getSamples(samplesDir);
+            std::vector<std::pair<std::string, int>> files_sorted{std::make_move_iterator(begin(files)),
+                                                                  std::make_move_iterator(end(files))};
+            sort(begin(files_sorted), end(files_sorted), [](auto p1, auto p2) { return p1.second < p2.second; });
 
             cv::Mat samples;
-            std::vector<int> labels;
+            std::vector<int> labels, unique_labels;
 
             // Read samples ->
             int num_files = 0;
-            for (auto &file : files) {
+            for (auto &file : files_sorted) {
                 if (num_files > persons_limit && persons_limit > 0) {
                     break;
                 }
@@ -77,6 +83,9 @@ namespace Faces {
                 }
                 cv::Mat descriptors;
                 fs["descriptors"] >> descriptors;
+                descriptors = descriptors(cv::Rect(0, 0, descriptors.cols,
+                                                   descriptors.rows > samples_limit ? samples_limit
+                                                                                    : descriptors.rows));
                 fs.release();
 
                 if (samples.empty()) {
@@ -85,7 +94,8 @@ namespace Faces {
                     cv::vconcat(samples, descriptors, samples);
                 }
 
-                for (int i = 0; i < samples.rows; i++) {
+//                unique_labels.emplace_back(file.second);
+                for (int i = 0; i < descriptors.rows; i++) {
                     labels.emplace_back(file.second);
                 }
 
@@ -94,6 +104,8 @@ namespace Faces {
             // <- Read samples
 
             descriptor.classifier.train(samples, labels);
+
+            return unique_labels;
         }
 
         void recognition::getDescriptors(Face &face) {

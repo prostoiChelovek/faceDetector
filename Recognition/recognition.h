@@ -42,12 +42,12 @@ namespace Faces {
 
             Callbacks *callbacks;
 
-            explicit recognition(Callbacks *callbacks, cv::Size faceSize,
-                                 std::string classifierFile, std::string descriptorFile);
+            explicit recognition(Callbacks *callbacks, cv::Size faceSize, std::string classifierFile,
+                                 std::string descriptorFile, const std::string &labels_file = "");
 
             ~recognition();
 
-            void train(std::string samplesDir, int persons_limit = 0, int samples_limit = 0);
+            std::vector<int> train(std::string samplesDir, int persons_limit = 0, int samples_limit = 0);
 
             bool save(std::string file);
 
@@ -57,7 +57,7 @@ namespace Faces {
 
             std::map<std::string, int> getSamples(std::string dir);
 
-            bool readLabels(std::string file);
+            bool readLabels(const std::string &file = "");
 
             void addLabel(std::string &label);
 
@@ -68,7 +68,7 @@ namespace Faces {
             void recognize(std::vector<Face> &faces);
 
         private:
-            std::ofstream labelsFs;
+            std::fstream labelsFs;
 
             // DNN that estimates 128D face descriptors
             Facenet::FacenetClassifier<cv::ml::ANN_MLP> descriptor;

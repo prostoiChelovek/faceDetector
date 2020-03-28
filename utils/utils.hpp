@@ -81,18 +81,22 @@ inline std::vector<std::string> split(const std::string &str, const std::string 
     return parts;
 }
 
+inline bool getFileContent(std::fstream &fs, std::vector<std::string> &vecOfStrs) {
+    std::string str;
+    while (std::getline(fs, str)) {
+        if (!str.empty())
+            vecOfStrs.push_back(str);
+    }
+    return true;
+}
 
 inline bool getFileContent(const std::string &fileName, std::vector<std::string> &vecOfStrs) {
-    std::ifstream in(fileName.c_str());
+    std::fstream in(fileName.c_str(), std::ios::in);
     if (!in) {
         std::cerr << "Cannot open the file: " << fileName << std::endl;
         return false;
     }
-    std::string str;
-    while (std::getline(in, str)) {
-        if (!str.empty())
-            vecOfStrs.push_back(str);
-    }
+    getFileContent(in, vecOfStrs);
     in.close();
     return true;
 }
