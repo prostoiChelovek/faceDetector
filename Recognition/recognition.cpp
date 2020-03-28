@@ -94,7 +94,7 @@ namespace Faces {
                     cv::vconcat(samples, descriptors, samples);
                 }
 
-//                unique_labels.emplace_back(file.second);
+                unique_labels.emplace_back(file.second);
                 for (int i = 0; i < descriptors.rows; i++) {
                     labels.emplace_back(file.second);
                 }

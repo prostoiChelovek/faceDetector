@@ -13,8 +13,8 @@ using namespace Faces::Datasets;
 
 const std::string data_dir = "../Test/";
 const std::string config_file = "../config4test.json";
-int num_train_samples = 7;
-int max_persons = 50;
+int num_train_samples = 4;
+int max_persons = 4;
 std::string postfix_str;
 
 Occlusion_SoF occlusion = Occlusion_SoF::EYE;
@@ -62,7 +62,6 @@ void add_samples(T *dataset, Faces::Faces &faces, std::vector<T_a> &annotations)
     int j = 0;
     for (auto &a : annotations) {
         auto a_obj = a.annotations.back();
-        log(INFO, a_obj.id);
         faces.recognition.addLabel(a_obj.id);
 
         for (auto &annotation : get_annotations_for<Annotation_SoF>(dataset, a_obj.id, num_train_samples)) {
@@ -87,15 +86,12 @@ void add_samples(T *dataset, Faces::Faces &faces, std::vector<T_a> &annotations)
 }
 
 template<typename T, typename T_a>
-std::tuple<int, int> test(T *dataset, std::vector<T_a> &annotations, Faces::Faces &faces) {
+std::tuple<int, int>
+test(T *dataset, std::vector<T_a> &annotations, Faces::Faces &faces, const std::vector<int> &trained_ids) {
     int successfully = 0, failed = 0;
-    int i = 0;
-    for (auto &a : annotations) {
-        if (i > max_persons) {
-            break;
-        }
-        auto a_obj = a.annotations.back();
-        for (auto &annotation : get_annotations_for<Annotation_SoF>(dataset, a_obj.id, num_train_samples + 3,
+    for (const int &id : trained_ids) {
+        std::string id_str = faces.recognition.labels[id];
+        for (auto &annotation : get_annotations_for<Annotation_SoF>(dataset, id_str, num_train_samples + 3,
                                                                     num_train_samples)) {
             faces.detector.faces.clear();
 
@@ -116,15 +112,15 @@ std::tuple<int, int> test(T *dataset, std::vector<T_a> &annotations, Faces::Face
                 successfully++;
             } else {
                 failed++;
-                annotation_obj.id += ", not " + faces.recognition.labels[predicted_id];
+                annotation_obj.id +=
+                        ", not " + (predicted_id >= 0 ? faces.recognition.labels[predicted_id] : "unknown");
                 annotation_obj.draw(sample, cv::Scalar(0, 255, 0));
-                std::string path = data_dir + "/recognition_fails_2/" + std::to_string(real_label_id) + "_" +
+                std::string path = data_dir + "/recognition_fails_3/" + std::to_string(real_label_id) + "_" +
                                    std::to_string(predicted_id) + "_" + std::to_string(failed);
                 path += "_" + postfix_str + ".jpg";
                 cv::imwrite(path, sample);
             }
         }
-        i++;
     }
     return std::make_tuple(successfully, failed);
 }
@@ -133,20 +129,17 @@ template<typename T, typename T_a>
 void test_numbers(T *dataset, std::vector<T_a> &annotations, Faces::Faces &faces) {
     std::ofstream log_fs("../Test/log.txt", std::ios::app);
     log_fs << "==========================================" << std::endl;
-    int best_num_persons = max_persons;
-    int best_success_percent = 0;
+
     for (; num_train_samples < 20; num_train_samples += 4) {
-        for (max_persons = best_num_persons; max_persons < 61; max_persons += 20) {
-            faces.recognition.train(faces.cfg.samples_directory, max_persons, num_train_samples);
+        for (max_persons = num_train_samples; max_persons < 61; max_persons += 20) {
+            std::vector<int> trained_ids = faces.recognition.train(faces.cfg.samples_directory, max_persons,
+                                                                   num_train_samples);
             faces.recognition.save(faces.cfg.recognition_classifier);
 
             int successfully = 0, failed = 0;
-            std::tie(successfully, failed) = test(dataset, annotations, faces);
+            std::tie(successfully, failed) = test(dataset, annotations, faces, trained_ids);
             int success_percent = ((float) successfully / (float) (successfully + failed)) * 100;
-            if (success_percent > best_success_percent) {
-                best_success_percent = success_percent;
-                best_num_persons = max_persons;
-            }
+
             log(INFO, "Number of train samples:", num_train_samples);
             log(INFO, "Number of persons:", max_persons);
             log(INFO, "Recognized successfully:", successfully);
@@ -193,7 +186,8 @@ int main(int argc, char **argv) {
     }
 
     if (argc > 1 && strcmp(argv[1], "c") == 0) {
-        faces.recognition.train(faces.cfg.samples_directory, max_persons, num_train_samples);
+        std::vector<int> trained_ids = faces.recognition.train(faces.cfg.samples_directory, max_persons,
+                                                               num_train_samples);
 
         log(INFO, "Testing different difficulties...");
         std::ofstream log_fs("../Test/log2.txt", std::ios::app);
@@ -231,7 +225,7 @@ int main(int argc, char **argv) {
                         postfix_str += std::string(tmp_json);
 
                         int successfully = 0, failed = 0;
-                        std::tie(successfully, failed) = test(dataset, annotations, faces);
+                        std::tie(successfully, failed) = test(dataset, annotations, faces, trained_ids);
                         int success_percent = ((float) successfully / (float) (successfully + failed)) * 100;
 
                         log(INFO, "Postfix:", postfix_str);
