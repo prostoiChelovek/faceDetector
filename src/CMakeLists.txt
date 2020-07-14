@@ -1,2 +1,4 @@
+add_subdirectory(utils)
+
 add_subdirectory(Face)
-add_subdirectory(Detection)
+add_subdirectory(Detector)

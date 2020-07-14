@@ -9,8 +9,16 @@
 
 #include <Face/Face.h>
 
-int main(int argc, char **argv) {
+#include <Detector/IDetector.h>
 
+int main(int argc, char **argv) {
+    faces::IDetector *detector = FACES_CREATE_INSTANCE_NAME(faces::IDetector, "Test");
+    if (detector == nullptr) {
+        return 1;
+    }
+
+    cv::Mat test;
+    detector->detect(test);
 
     return 0;
 }
