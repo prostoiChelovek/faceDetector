@@ -12,7 +12,7 @@
 namespace faces {
 
     std::vector<Face> TestDetector::detect(const cv::Mat &img) {
-        std::cout << "It works!" << std::endl;
+        std::cout << "Test; " << _val << std::endl;
         return std::vector<Face>();
     }
 

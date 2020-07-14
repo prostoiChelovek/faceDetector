@@ -12,7 +12,7 @@
 #include <Detector/IDetector.h>
 
 int main(int argc, char **argv) {
-    faces::IDetector *detector = FACES_CREATE_INSTANCE_NAME(faces::IDetector, "Test");
+    faces::IDetector *detector = FACES_CREATE_INSTANCE_ARGS(faces::IDetector, "Test", 5);
     if (detector == nullptr) {
         return 1;
     }
