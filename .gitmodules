@@ -1,6 +1,0 @@
-[submodule "modules/pugixml"]
-	path = modules/pugixml
-	url = git@github.com:zeux/pugixml.git
-[submodule "modules/facenet_classifier"]
-	path = modules/facenet_classifier
-	url = git@github.com:prostoiChelovek/facenet_classifier.git
