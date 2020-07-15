@@ -28,16 +28,17 @@ namespace faces {
 
     class TestDetector : public IDetector {
     public:
-        explicit TestDetector(int val) : _val(val) {}
+        explicit TestDetector(std::string const &a) : _val(a) {}
 
         std::vector<Face> detect(const cv::Mat &img) override;
 
-        FACES_REGISTER_SUBCLASS(IDetector, TestDetector, "Test", int)
+        FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const &)
 
     private:
-        int _val;
+        std::string _val;
     };
 
+    FACES_REGISTER_SUBCLASS_ARGUMENTS(IDetector, TestDetector, Test)
 
 }
 

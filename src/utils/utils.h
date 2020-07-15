@@ -14,6 +14,7 @@
 #include <iostream>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 
 namespace faces {
@@ -63,7 +64,7 @@ namespace faces {
         };
 
         /**
-         * A class which contains the register of classes and methods to create them.
+         * A class which contains the register of classes, and methods to create them.
          *
          * @tparam BaseT - a common base type of stored classes
          */
@@ -72,6 +73,17 @@ namespace faces {
         public:
             /// A type of the map, where subclasses will be registered
             typedef std::map<std::string, std::shared_ptr<FunctionBase>> MapType;
+
+            template<typename ...Args>
+            static typename FunctionWrapper<BaseT *, Args...>::FuncType
+            getInstanceInitializer(std::string const &s, void(*dummyFn)(Args...)) {
+                auto it = getMap().find(s);
+                if (it == getMap().end())
+                    return nullptr;
+
+                auto *wrappedFn = dynamic_cast<FunctionWrapper<BaseT *, Args...> *>(it->second.get());
+                return wrappedFn->f;
+            }
 
             /**
              * Creates an instance of a registered subclass by its name.
@@ -114,9 +126,9 @@ namespace faces {
         /**
          * A helper class used to easily register subclasses
          *
-         * @tparam BaseT - a base class of the registered class
+         * @tparam BaseT    - a base class of the registered class
          * @tparam DerivedT - a type of the registered class itself
-         * @tparam Args - type of DerivedT`s constructor arguments (can be empty)
+         * @tparam Args     - type of DerivedT`s constructor arguments (can be empty)
          */
         template<typename BaseT, typename DerivedT, typename ...Args>
         class DerivedRegistrar : public Factory<BaseT> {
@@ -128,6 +140,9 @@ namespace faces {
              * @param name - name of the registered subclass
              */
             explicit DerivedRegistrar(std::string const &name) {
+                static_assert(std::is_constructible<DerivedT, Args &&...>::value,
+                              "Incorrect DerivedT`s constructor argument types passed");
+
                 std::function<BaseT *(Args...)> fn = createT<BaseT, DerivedT, Args...>;
                 std::shared_ptr<FunctionBase> fnBase = std::shared_ptr<FunctionBase>(
                         new FunctionWrapper<BaseT *, Args...>(fn));
@@ -142,27 +157,22 @@ namespace faces {
 
 // TODO: add documentation
 
-#define FACES_REGISTER_SUBCLASS_NO_ARGS(base, subclass, name) \
-        inline static faces::factory::DerivedRegistrar<base, subclass> __registrar_instance{name};
+#define FACES_GET_DUMMY_FUNCTION_NAME(base, name) __factory_arguments_dummy_ ## base ## _ ## name
 
-#define FACES_REGISTER_SUBCLASS_WITH_ARGS(base, subclass, name, ...) \
-        inline static faces::factory::DerivedRegistrar<base, subclass, __VA_ARGS__> __registrar_instance{name};
+#define FACES_CREATE_DUMMY_FUNCTION(base, name, ...) \
+        static void FACES_GET_DUMMY_FUNCTION_NAME(base, name) (__VA_ARGS__) {}
 
-#define FACES_GET_5_TH_ARG(arg1, arg2, arg3, arg4, arg5, ...) arg5
+#define FACES_REGISTER_SUBCLASS(base, subclass, name, ...) \
+        FACES_CREATE_DUMMY_FUNCTION(base, name, ##__VA_ARGS__) \
+        inline static faces::factory::DerivedRegistrar<base, subclass, ##__VA_ARGS__> __registrar_instance{#name};
 
-#define FACES_REGISTER_SUBCLASS_MACRO_CHOOSER(...) \
-        FACES_GET_5_TH_ARG(__VA_ARGS__, FACES_REGISTER_SUBCLASS_WITH_ARGS, FACES_REGISTER_SUBCLASS_NO_ARGS)
-
-#define FACES_REGISTER_SUBCLASS(...) \
-        FACES_REGISTER_SUBCLASS_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
+#define FACES_REGISTER_SUBCLASS_ARGUMENTS(base, subclass, name) \
+    inline constexpr auto *FACES_GET_DUMMY_FUNCTION_NAME(base, name) \
+            = subclass::FACES_GET_DUMMY_FUNCTION_NAME(base, name);
 
 
-#define FACES_CREATE_INSTANCE_FN(base) faces::factory::Factory<base>::createInstance
+#define FACES_CREATE_INSTANCE(base, name, ...) \
+        faces::factory::Factory<faces::base>::getInstanceInitializer(#name, faces::FACES_GET_DUMMY_FUNCTION_NAME(base, name))(__VA_ARGS__)
 
-#define FACES_CREATE_INSTANCE(base, name) \
-        FACES_CREATE_INSTANCE_FN(base)(name)
-
-#define FACES_CREATE_INSTANCE_ARGS(base, name, ...) \
-        FACES_CREATE_INSTANCE_FN(base)(name, __VA_ARGS__)
 
 #endif //FACES_UTILS_H

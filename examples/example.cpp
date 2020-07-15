@@ -12,7 +12,9 @@
 #include <Detector/IDetector.h>
 
 int main(int argc, char **argv) {
-    faces::IDetector *detector = FACES_CREATE_INSTANCE_ARGS(faces::IDetector, "Test", 5);
+    faces::IDetector *detector = FACES_CREATE_INSTANCE(IDetector, Test, "hi");
+    // it does not work: Invalid arguments passed to the constructor of 'Test'
+    // faces::IDetector *detector =  faces::factory::Factory<faces::IDetector>::createInstance("Test", "hi");
     if (detector == nullptr) {
         return 1;
     }
