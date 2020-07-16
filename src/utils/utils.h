@@ -182,28 +182,97 @@ namespace faces {
 
 }
 
-// TODO: add documentation
-
+/**
+ * Constructs a name for an arguments-dummy function
+ *
+ * @param base - parent class name; it should not contain any extra parts (like namespace name)
+ * @param name - display name of the subclass; it should not contain any spaces or extra characters
+ */
 #define FACES_GET_DUMMY_FUNCTION_NAME(base, name) __factory_arguments_dummy_ ## base ## _ ## name
 
+/**
+ * Defines a helper function used to deduce constructor arguments easily
+ */
 #define FACES_CREATE_DUMMY_FUNCTION(base, name, ...) \
         static void FACES_GET_DUMMY_FUNCTION_NAME(base, name) (__VA_ARGS__) {}
 
+/**
+ * Registers a given subclass with the given name.
+ * It creates an argument-dummy method and calls a DerivedRegistrar`s constructor
+ *
+ * @param base      - name of the parent class; it should not contain any extra parts (eg. namespace name)
+ * @param subclass  - name of the registered subclass
+ * @param name      - display-name of the subclass, refer to it with;
+ *                    it should not contain any spaces or extra characters
+ * @param ...       - [optional] types of the constructor arguments (should match exactly)
+ *
+ * @code
+ *      FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const&)
+ * @endcode
+ */
 #define FACES_REGISTER_SUBCLASS(base, subclass, name, ...) \
         FACES_CREATE_DUMMY_FUNCTION(base, name, ##__VA_ARGS__) \
         inline static faces::factory::DerivedRegistrar<base, subclass, ##__VA_ARGS__> __registrar_instance{#name};
 
+/**
+ * Registers the constructor argument types of the given subclass.
+ * It creates a pointer to the dummy function in the subclass, in the global scope.
+ * It is necessary to use that function without knowing the name of the subclass.
+ *
+ * @code
+ *      FACES_REGISTER_SUBCLASS_ARGUMENTS(IDetector, TestDetector, Test)
+ * @endcode
+ */
 #define FACES_REGISTER_SUBCLASS_ARGUMENTS(base, subclass, name) \
     inline constexpr auto *FACES_GET_DUMMY_FUNCTION_NAME(base, name) \
             = subclass::FACES_GET_DUMMY_FUNCTION_NAME(base, name);
 
+/**
+ * A helper macro, which expands to the getInstanceInitializer method of the factory
+ *
+ * @param base - base class for the factory
+ */
 #define FACES_GET_INITIALIZER_FN(base) faces::factory::Factory<faces::base>::getInstanceInitializer
 
+/**
+ * A helper macro, which expands to the createInstance method of the factory.
+ * You may use it to easily pass template arguments to the method
+ *
+ * @code
+ *      faces::IDetector *detector = FACES_CREATE_INSTANCE_FN(IDetector)<std::string const&>("Test", "hi");
+ * @endcode
+ */
 #define FACES_CREATE_INSTANCE_FN(base) faces::factory::Factory<faces::base>::createInstance
 
+/**
+ * Creates an instance of a subclass of the given base by the given static name
+ *
+ * @param base - a parent class, create a subclass of
+ * @param name - a display name of the subclass;
+ *               it should not be any kind of string, but a valid literal to include in the function name
+ * @param ...  - [optional] arguments to pass to the constructor of the subclass
+ *
+ * @code
+ *      faces::IDetector *detector = FACES_CREATE_INSTANCE(IDetector, Test, "hi");
+ * @endcode
+ */
 #define FACES_CREATE_INSTANCE(base, name, ...) \
         FACES_GET_INITIALIZER_FN(base)(#name, faces::FACES_GET_DUMMY_FUNCTION_NAME(base, name))(__VA_ARGS__)
 
+/**
+ * Creates an instance of a subclass of the given base by the given string name
+ *
+ * @see FACES_CREATE_INSTANCE for more details
+ * @see FACES_CREATE_INSTANCE_FN in case if you had some problems with constructor argument types
+ *
+ * @param name - a display name of the subclass; it can be any kind of string
+ * @param ...  - [optional] arguments to pass to the constructor of the subclass;
+ *                          their types should perfectly match the types of the constructor arguments
+ *
+ * @code
+ *      faces::IDetector *detectorD = FACES_CREATE_INSTANCE_DYNAMIC(IDetector, "Test", 42);
+ * @endcode
+ */
 #define FACES_CREATE_INSTANCE_DYNAMIC(base, name, ...) \
         FACES_CREATE_INSTANCE_FN(base)(name, ##__VA_ARGS__)
 
