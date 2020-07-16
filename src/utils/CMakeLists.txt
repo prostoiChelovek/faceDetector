@@ -3,4 +3,5 @@ target_sources(faces
         utils.cpp
         PUBLIC
         utils.h
+        factory.hpp
         )
