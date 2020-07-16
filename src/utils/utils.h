@@ -75,42 +75,68 @@ namespace faces {
             typedef std::map<std::string, std::shared_ptr<FunctionBase>> MapType;
 
             template<typename ...Args>
-            static typename FunctionWrapper<BaseT *, Args...>::FuncType
-            getInstanceInitializer(std::string const &s, void(*dummyFn)(Args...)) {
-                auto it = getMap().find(s);
-                if (it == getMap().end())
-                    return nullptr;
-
-                auto *wrappedFn = dynamic_cast<FunctionWrapper<BaseT *, Args...> *>(it->second.get());
-                return wrappedFn->f;
-            }
+            using InstanceInitializerT = typename FunctionWrapper<BaseT *, Args...>::FuncType;
 
             /**
-             * Creates an instance of a registered subclass by its name.
+             * Returns an initializer function of a registered subclass by its name.
              *
              * @param s     - name of the subclass
-             * @param args  - arguments to pass to constructor
              *
              * @tparam Args - type of subclass` constructor arguments;
-             *                you only have to specify them when types of passed arguments
-             *                don`t perfectly match types of constructor`s arguments
+             *                they should perfectly match types passed during the registration
              *
              * @throws std::runtime_error - when ...Args types don`t match
              *                              types specified during the registration
              *
-             * @return a pointer to an instance of a requested subclass OR a `nullptr` if it was not found
+             * @return an initializer function of the requested subclass OR a `nullptr` if it was not found
              */
             template<typename ...Args>
-            static BaseT *createInstance(std::string const &s, Args ...args) {
-                auto it = getMap().find(s);
+            static InstanceInitializerT<Args...> getInstanceInitializer(std::string const &name) {
+                auto it = getMap().find(name);
                 if (it == getMap().end())
                     return nullptr;
 
                 auto *wrappedFn = dynamic_cast<FunctionWrapper<BaseT *, Args...> *>(it->second.get());
                 if (!wrappedFn) {
-                    throw std::runtime_error("Invalid arguments passed to the constructor of '" + s + "'");
+                    throw std::runtime_error(
+                            "Invalid argument types passed to the constructor of '" + name + "'");
                 }
-                return wrappedFn->f(args...);
+                return wrappedFn->f;
+            }
+
+
+            /**
+             * A wrapper around getInstanceInitializer,
+             * which deduces constructor argument types from the passed function
+             *
+             * @see getInstanceInitializer for more details
+             *
+             * @param dummyFn - a function used to deduce the constructor arguments
+             */
+            template<typename ...Args>
+            static auto getInstanceInitializer(std::string const &name, void(*dummyFn)(Args...)) {
+                return getInstanceInitializer<Args...>(name);
+            }
+
+            /**
+             * A wrapper around getInstanceInitializer,
+             * which deduces constructor argument types from the passed arguments
+             * and calls that function with the given arguments
+             *
+             * @see getInstanceInitializer for more details
+             *
+             * @note you have to specify constructor argument types in the template manually,
+             *       in case if passed argument types do not match constructor`s
+             *
+             * @param args - arguments to pass to the constructor
+             */
+            template<typename ...Args>
+            static BaseT *createInstance(std::string const &name, Args ...args) {
+                auto initializer = getInstanceInitializer<Args...>(name);
+                if (!initializer) {
+                    return nullptr;
+                }
+                return initializer(args...);
             }
 
         protected:
@@ -121,6 +147,7 @@ namespace faces {
                 static MapType map;
                 return map;
             }
+
         };
 
         /**
@@ -170,9 +197,15 @@ namespace faces {
     inline constexpr auto *FACES_GET_DUMMY_FUNCTION_NAME(base, name) \
             = subclass::FACES_GET_DUMMY_FUNCTION_NAME(base, name);
 
+#define FACES_GET_INITIALIZER_FN(base) faces::factory::Factory<faces::base>::getInstanceInitializer
+
+#define FACES_CREATE_INSTANCE_FN(base) faces::factory::Factory<faces::base>::createInstance
 
 #define FACES_CREATE_INSTANCE(base, name, ...) \
-        faces::factory::Factory<faces::base>::getInstanceInitializer(#name, faces::FACES_GET_DUMMY_FUNCTION_NAME(base, name))(__VA_ARGS__)
+        FACES_GET_INITIALIZER_FN(base)(#name, faces::FACES_GET_DUMMY_FUNCTION_NAME(base, name))(__VA_ARGS__)
+
+#define FACES_CREATE_INSTANCE_DYNAMIC(base, name, ...) \
+        FACES_CREATE_INSTANCE_FN(base)(name, ##__VA_ARGS__)
 
 
 #endif //FACES_UTILS_H

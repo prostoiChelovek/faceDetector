@@ -13,8 +13,12 @@
 
 int main(int argc, char **argv) {
     faces::IDetector *detector = FACES_CREATE_INSTANCE(IDetector, Test, "hi");
-    // it does not work: Invalid arguments passed to the constructor of 'Test'
-    // faces::IDetector *detector =  faces::factory::Factory<faces::IDetector>::createInstance("Test", "hi");
+
+    // does not work with std::string somehow
+    // faces::IDetector *detector = FACES_CREATE_INSTANCE_DYNAMIC(IDetector, "Test", "hi");
+
+    // faces::IDetector *detector = FACES_CREATE_INSTANCE_FN(IDetector)<std::string const&>("Test", "hi");
+
     if (detector == nullptr) {
         return 1;
     }
