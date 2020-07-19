@@ -17,12 +17,22 @@
 #include <type_traits>
 
 /**
+ * Constructs a name with the format `[orig]_[base]_[name]`
+ *
+ * @param orig - name to postfix
+ * @param base - name of the base class
+ * @param name - display name of the subclass
+ */
+#define FACES_POSTFIX_FACTORY_NAME(orig, base, name) orig ## _ ## base ## _ ## name
+
+/**
  * Constructs a name for an arguments-dummy function
  *
  * @param base - parent class name; it should not contain any extra parts (like namespace name)
  * @param name - display name of the subclass; it should not contain any spaces or extra characters
  */
-#define FACES_GET_DUMMY_FUNCTION_NAME(base, name) __factory_arguments_dummy_ ## base ## _ ## name
+#define FACES_GET_DUMMY_FUNCTION_NAME(base, name) \
+        FACES_POSTFIX_FACTORY_NAME(__factory_arguments_dummy, base, name)
 
 /**
  * Defines a helper function used to deduce constructor arguments easily
@@ -53,20 +63,8 @@
  */
 #define FACES_REGISTER_SUBCLASS(base, subclass, name, ...) \
         FACES_CREATE_DUMMY_FUNCTION(base, name, ##__VA_ARGS__) \
-        inline static faces::factory::DerivedRegistrar<base, subclass, ##__VA_ARGS__> __registrar_instance{#name};
-
-/**
- * Registers the constructor argument types of the given subclass.
- * It creates a pointer to the dummy function in the subclass, in the global scope.
- * It is necessary to use that function without knowing the name of the subclass.
- *
- * @code
- *      FACES_REGISTER_SUBCLASS_ARGUMENTS(IDetector, TestDetector, Test)
- * @endcode
- */
-#define FACES_REGISTER_SUBCLASS_ARGUMENTS(base, subclass, name) \
-    inline constexpr auto *FACES_GET_DUMMY_FUNCTION_NAME(base, name) \
-            = subclass::FACES_GET_DUMMY_FUNCTION_NAME(base, name);
+        const static faces::factory::DerivedRegistrar<base, subclass, ##__VA_ARGS__> \
+                FACES_POSTFIX_FACTORY_NAME(__factory_registrar_instance, base, name){#name};
 
 /**
  * A helper macro, which expands to the createInstance method of the factory.
@@ -114,7 +112,7 @@
  * This namespace contains classes and functions needed to create factories of different classes.
  * It allows us to create subclasses by their names
  *
- * @see https://stackoverflow.com/a/582456/9577873
+ * @see based on https://stackoverflow.com/a/582456/9577873
  */
 namespace faces::factory {
     /**
@@ -170,10 +168,10 @@ namespace faces::factory {
         /**
          * Returns an initializer function of a registered subclass by its name.
          *
-         * @param s     - name of the subclass
+         * @param name     - name of the subclass
          *
-         * @tparam Args - type of subclass` constructor arguments;
-         *                they should perfectly match types passed during the registration
+         * @tparam Args     - type of subclass` constructor arguments;
+         *                    they should perfectly match types passed during the registration
          *
          * @throws std::runtime_error - when ...Args types don`t match
          *                              types specified during the registration
@@ -227,6 +225,18 @@ namespace faces::factory {
                 return nullptr;
             }
             return initializer(args...);
+        }
+
+        /**
+         * @return a vector of registered subclasses names
+         */
+        static std::vector<std::string> getRegisteredNames() {
+            const MapType &subclasses = getMap();
+            std::vector<std::string> res;
+            for (const auto &subclass : subclasses) {
+                res.emplace_back(subclass.first);
+            }
+            return res;
         }
 
     protected:

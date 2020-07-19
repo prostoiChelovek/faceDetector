@@ -19,6 +19,11 @@ int main(int argc, char **argv) {
 
     // faces::IDetector *detector = FACES_CREATE_INSTANCE_FN(IDetector)<std::string const&>("Test", "hi");
 
+    auto subclasses = faces::factory::Factory<faces::IDetector>::getRegisteredNames();
+    for (auto &subclass : subclasses) {
+        std::cout << subclass << std::endl;
+    }
+
     if (detector == nullptr) {
         return 1;
     }

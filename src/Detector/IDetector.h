@@ -32,13 +32,11 @@ namespace faces {
 
         std::vector<Face> detect(const cv::Mat &img) override;
 
-        FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const &)
-
     private:
         std::string _val;
     };
 
-    FACES_REGISTER_SUBCLASS_ARGUMENTS(IDetector, TestDetector, Test)
+    FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const &)
 
 }
 
