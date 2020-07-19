@@ -9,10 +9,10 @@
 
 #include <Face/Face.h>
 
-#include <Detector/IDetector.h>
+#include <Detector/OcvDefaultDnnDetector.h>
 
 int main(int argc, char **argv) {
-    faces::IDetector *detector = FACES_CREATE_INSTANCE(IDetector, Test, "hi");
+    faces::IDetector *detector = FACES_CREATE_INSTANCE(IDetector, OcvDefaultDnn);
 
     // does not work with std::string somehow
     // faces::IDetector *detector = FACES_CREATE_INSTANCE_DYNAMIC(IDetector, "Test", "hi");

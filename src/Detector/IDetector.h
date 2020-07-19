@@ -22,21 +22,11 @@ namespace faces {
     class IDetector {
     public:
 
+        cv::Size faceSize = cv::Size(200, 200);
+
         virtual std::vector<Face> detect(const cv::Mat &img) = 0;
 
     };
-
-    class TestDetector : public IDetector {
-    public:
-        explicit TestDetector(std::string const &a) : _val(a) {}
-
-        std::vector<Face> detect(const cv::Mat &img) override;
-
-    private:
-        std::string _val;
-    };
-
-    FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const &)
 
 }
 

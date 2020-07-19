@@ -1,6 +1,9 @@
 target_sources(faces
         PRIVATE
-        IDetector.cpp
+        OcvDnnDetector.cpp
+        OcvDefaultDnnDetector.cpp
         PUBLIC
         IDetector.h
+        OcvDnnDetector.h
+        OcvDefaultDnnDetector.h
         )
