@@ -21,7 +21,7 @@
  * A name of the class attribute.
  * It is necessary because we do not want someone to use them directly
  */
-#define _FACES_GET_ATTRIBUTE_NAME(name) __faces_property_ ## name
+#define _FACES_GET_ATTRIBUTE_NAME(name) __faces_attrubute_ ## name
 
 /**
  * Declare a class property and a getter for it.

@@ -24,7 +24,21 @@ namespace faces {
 
         cv::Size faceSize = cv::Size(200, 200);
 
-        virtual std::vector<Face> detect(const cv::Mat &img) = 0;
+        std::vector<Face> detect(cv::Mat const &img) {
+            if (!_ok) {
+                return {};
+            }
+            return _detect(img);
+        }
+
+        [[nodiscard]] bool isOk() const {
+            return _ok;
+        }
+
+    protected:
+        bool _ok = false;
+
+        virtual std::vector<Face> _detect(cv::Mat const &img) = 0;
 
     };
 
