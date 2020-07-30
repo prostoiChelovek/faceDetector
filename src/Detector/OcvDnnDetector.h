@@ -15,14 +15,14 @@
 
 #include <opencv2/dnn.hpp>
 
-#include "IDetector.h"
+#include "Detector.h"
 
 namespace faces {
 
     /**
      * A base class for opencv DNN based face detectors
      */
-    class OcvDnnDetector : public IDetector {
+    class OcvDnnDetector : public Detector {
     public:
         FACES_DECLARE_ATTRIBUTE(float, confidenceThreshold)
 
@@ -31,7 +31,7 @@ namespace faces {
          *
          * @see readNet
          */
-        OcvDnnDetector(std::string const &configFile, std::string const &weightFile);
+        FACES_MAIN_CONSTRUCTOR(OcvDnnDetector, std::string const &configFile, std::string const &weightFile);
 
         /**
          * Reads a DNN from the given files
@@ -121,8 +121,9 @@ namespace faces {
          *
          * @return predicted points in format `{top_left_x, top_left_y, bottom_right_x, bottom_right_y}`
          */
-        virtual cv::Vec4i
-        extractPoints(cv::Mat const &detection, int const &index, cv::Size const &imgSize) = 0;
+        virtual cv::Vec4i extractPoints(cv::Mat const &detection,
+                                        int const &index,
+                                        cv::Size const &imgSize) = 0;
 
     };
 

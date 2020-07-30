@@ -7,8 +7,8 @@
  * @brief This file contains an interface for face detectors
  */
 
-#ifndef FACES_IDETECTOR_H
-#define FACES_IDETECTOR_H
+#ifndef FACES_DETECTOR_H
+#define FACES_DETECTOR_H
 
 #include <vector>
 
@@ -19,10 +19,8 @@
 
 namespace faces {
 
-    class IDetector {
+    class Detector {
     public:
-
-        cv::Size faceSize = cv::Size(200, 200);
 
         std::vector<Face> detect(cv::Mat const &img) {
             if (!_ok) {
@@ -44,4 +42,4 @@ namespace faces {
 
 }
 
-#endif //FACES_IDETECTOR_H
+#endif //FACES_DETECTOR_H

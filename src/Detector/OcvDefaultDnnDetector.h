@@ -45,8 +45,7 @@ namespace faces {
         cv::Vec4i extractPoints(cv::Mat const &detection, int const &index, cv::Size const &imgSize) override;
     };
 
-    FACES_REGISTER_SUBCLASS(IDetector, OcvDefaultDnnDetector, OcvDefaultDnn,
-                            std::string const&, std::string const&)
+    FACES_REGISTER_SUBCLASS(Detector, OcvDefaultDnnDetector, OcvDefaultDnn)
 
 }
 

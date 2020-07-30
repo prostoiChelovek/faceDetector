@@ -41,6 +41,18 @@
         static void FACES_GET_DUMMY_FUNCTION_NAME(base, name) (__VA_ARGS__) {}
 
 /**
+ * Creates a reference to constructor arguments dummy function
+ *
+ * @param base      - base class
+ * @param subclass  - name of the class, creating reference to dummy function of
+ * @param name      - display name
+ */
+#define FACES_CREATE_CONSTRUCTOR_DUMMY_REF(base, subclass, name) \
+        static auto *__factory_constructor_arguments_dummy_ ## base ## _ ## name \
+                                    = &subclass::__factory_constructor_arguments_dummy;
+
+
+/**
  * A helper macro, which expands to the getInstanceInitializer method of the factory
  *
  * @param base - base class for the factory
@@ -49,22 +61,24 @@
 
 /**
  * Registers a given subclass with the given name.
- * It creates an argument-dummy method and calls a DerivedRegistrar`s constructor
+ * It creates a reference to constructor dummy function and calls a factory::registerSubclass function
  *
  * @param base      - name of the parent class; it should not contain any extra parts (eg. namespace name)
  * @param subclass  - name of the registered subclass
  * @param name      - display-name of the subclass, refer to it with;
  *                    it should not contain any spaces or extra characters
- * @param ...       - [optional] types of the constructor arguments (should match exactly)
+ *
+ * @note base class or subclass should call the @ref FACES_MAIN_CONSTRUCTOR macro to define its constructor
  *
  * @code
- *      FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test, std::string const&)
+ *      FACES_REGISTER_SUBCLASS(IDetector, TestDetector, Test)
  * @endcode
  */
-#define FACES_REGISTER_SUBCLASS(base, subclass, name, ...) \
-        FACES_CREATE_DUMMY_FUNCTION(base, name, ##__VA_ARGS__) \
-        const static faces::factory::DerivedRegistrar<base, subclass, ##__VA_ARGS__> \
-                FACES_POSTFIX_FACTORY_NAME(__factory_registrar_instance, base, name){#name};
+#define FACES_REGISTER_SUBCLASS(base, subclass, name) \
+        FACES_CREATE_CONSTRUCTOR_DUMMY_REF(base, subclass, name) \
+        const int FACES_POSTFIX_FACTORY_NAME(__factory_registrar_dummy, base, name) \
+            = factory::registerSubclass<base, subclass>(#name, \
+                    __factory_constructor_arguments_dummy_ ## base ## _ ## name);
 
 /**
  * A helper macro, which expands to the createInstance method of the factory.
@@ -89,7 +103,8 @@
  * @endcode
  */
 #define FACES_CREATE_INSTANCE(base, name, ...) \
-        FACES_GET_INITIALIZER_FN(base)(#name, faces::FACES_GET_DUMMY_FUNCTION_NAME(base, name))(__VA_ARGS__)
+        FACES_GET_INITIALIZER_FN(base)(#name, \
+                    faces::__factory_constructor_arguments_dummy_ ## base ## _ ## name)(__VA_ARGS__)
 
 /**
  * Creates an instance of a subclass of the given base by the given string name
@@ -107,6 +122,23 @@
  */
 #define FACES_CREATE_INSTANCE_DYNAMIC(base, name, ...) \
         FACES_CREATE_INSTANCE_FN(base)(name, ##__VA_ARGS__)
+
+/**
+ * Creates a class constructor and a dummy function with the same arguments to access it from outside
+ *
+ * @param cls - class name
+ * @param ... - constructor arguments
+ *
+ * @code
+ *      FACES_MAIN_CONSTRUCTOR(Test, std::string const &configFile, std::string const &weightFile)
+ *          : configFile(configFile), weightFile(weightFile) {
+ *
+ *      }
+ * @endcode
+ */
+#define FACES_MAIN_CONSTRUCTOR(cls, ...) \
+        static void __factory_constructor_arguments_dummy(__VA_ARGS__) {}  \
+        cls(__VA_ARGS__)
 
 /**
  * This namespace contains classes and functions needed to create factories of different classes.
@@ -239,7 +271,6 @@ namespace faces::factory {
             return res;
         }
 
-    protected:
         /**
          * @return a static instance of the subclass register
          */
@@ -251,32 +282,35 @@ namespace faces::factory {
     };
 
     /**
-     * A helper class used to easily register subclasses
+     * A helper function used to easily register subclasses
+     *
+     * @param name    - name of the registered subclass
+     * @param dummyFn - a function used to deduce DerivedT`s constructor arguments
      *
      * @tparam BaseT    - a base class of the registered class
      * @tparam DerivedT - a type of the registered class itself
      * @tparam Args     - type of DerivedT`s constructor arguments (can be empty)
+     *
+     * @returns a dummy value, used to assign this function`s value to a global variable;
+     *          this is necessary to allow calling this outside of a function
+     *
+     * @note this function is used in @ref FACES_REGISTER_SUBCLASS macro,
+     *       and you don`t have to call it yourself
      */
     template<typename BaseT, typename DerivedT, typename ...Args>
-    class DerivedRegistrar : public Factory<BaseT> {
-    public:
-        /**
-         * This constructor registers a subclass
-         * It is necessary to perform the registration in the class body
-         *
-         * @param name - name of the registered subclass
-         */
-        explicit DerivedRegistrar(std::string const &name) {
-            static_assert(std::is_constructible<DerivedT, Args &&...>::value,
-                          "Incorrect DerivedT`s constructor argument types passed");
+    int registerSubclass(std::string const &name, void(*dummyFn)(Args...)) {
+        static_assert(std::is_constructible<DerivedT, Args &&...>::value,
+                      "Incorrect DerivedT`s constructor argument types passed");
 
-            std::function<BaseT *(Args...)> fn = createT<BaseT, DerivedT, Args...>;
-            std::shared_ptr<FunctionBase> fnBase = std::shared_ptr<FunctionBase>(
-                    new FunctionWrapper<BaseT *, Args...>(fn));
+        std::function<BaseT *(Args...)> fn = createT<BaseT, DerivedT, Args...>;
+        std::shared_ptr<FunctionBase> fnBase = std::shared_ptr<FunctionBase>(
+                new FunctionWrapper<BaseT *, Args...>(fn));
 
-            this->getMap()[name] = fnBase;
-        }
-    };
+        Factory<BaseT>().getMap()[name] = fnBase;
+
+        return 0;
+    }
+
 
 }
 
