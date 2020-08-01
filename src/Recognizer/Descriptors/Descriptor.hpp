@@ -4,7 +4,7 @@
  * @date 01 Aug 2020
  * @copyright MIT License
  *
- * @brief
+ * @brief This file contains a base class for face descriptors
  */
 
 #ifndef FACES_DESCRIPTOR_HPP
@@ -16,25 +16,29 @@
 
 namespace faces {
 
+    /**
+     * A base class for all of the face descriptors
+     */
     class Descriptor {
     public:
-        std::vector<double> computeDescriptors(cv::Mat const &faceImg) {
-            if (!_ok) {
-                return {};
-            }
+        /**
+         * Estimates descriptors for the given face image
+         * It is just a wrapper around @ref _computeDescriptors, which check `_ok` and prepares an image
+         *
+         * @param faceImg - a face ROI
+         *
+         * @return a descriptor vector for the given face OR an empty vector if not `_ok`
+         */
+        std::vector<double> computeDescriptors(cv::Mat const &faceImg);
 
-            cv::Mat preparedImg = prepareImage(faceImg);
-
-            return _computeDescriptors(preparedImg);
-        }
-
-        cv::Mat prepareImage(cv::Mat const &faceImg) {
-            cv::Mat prepared;
-            cv::resize(faceImg, prepared, get_faceSize());
-            _prepareImage(prepared);
-
-            return prepared;
-        }
+        /**
+         * Prepares an image for descriptor by resizing it and applying a custom @ref _prepareImage method
+         *
+         * @param faceImg - a face image
+         *
+         * @return a preprocessed version of the given image
+         */
+        cv::Mat prepareImage(cv::Mat const &faceImg);
 
         /**
          * @return a value of the @ref _ok flag
@@ -47,11 +51,25 @@ namespace faces {
         /// the flag which indicates the readiness of the detector
         bool _ok = false;
 
+        /// a size of the face image to pass to the detector
         FACES_DECLARE_ATTRIBUTE(cv::Size, faceSize)
 
+        /**
+         * Estimates descriptors for the given face image
+         *
+         * @param faceImg - a face ROI
+         *
+         * @return a descriptor vector for the given face
+         */
         virtual std::vector<double> _computeDescriptors(cv::Mat const &faceImg) = 0;
 
-        virtual void _prepareImage(cv::Mat const &faceImg) {}
+        /**
+         * A custom image preprocessing method, you may override;
+         * It is called after the resizing and before descriptors computing
+         *
+         * @param faceImg - a face image to prepare
+         */
+        virtual void _prepareImage(cv::Mat &faceImg) {}
 
     };
 

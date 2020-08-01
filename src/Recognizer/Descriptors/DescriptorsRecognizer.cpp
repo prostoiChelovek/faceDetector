@@ -3,16 +3,11 @@
  * @author Люнгрин Андрей aka prostoichelovek <iam.prostoi.chelovek@gmail.ru>
  * @date 01 Aug 2020
  * @copyright MIT License
- *
- * @brief
  */
 
 #include "DescriptorsRecognizer.h"
 
 namespace faces {
-
-    DescriptorsRecognizer::DescriptorsRecognizer() {
-    }
 
     bool DescriptorsRecognizer::save(std::string const &dst) {
         return classifier->save(dst);
@@ -34,7 +29,7 @@ namespace faces {
         face.label = label;
     }
 
-    void DescriptorsRecognizer::_train(std::map<int, cv::Mat &> const &samples) {
+    void DescriptorsRecognizer::train(std::map<int, cv::Mat &> const &samples) {
         if (!descriptor->isOk()) return;
 
         std::map<int, std::vector<double>> descriptorSamples;
