@@ -23,16 +23,15 @@ namespace faces {
     public:
         /// The bounding box of the face on an image
         cv::Rect rect;
-        /// The confidence of a detector about this face
-        int detectionConfidence = 0;
+
+        /// A predicted by the Recognizer label of this face
+        int label = -1;
 
         Face() = default;
 
-        explicit Face(cv::Rect rect, const int &detectionConfidence = 0)
-                : rect(std::move(rect)), detectionConfidence(detectionConfidence) {}
+        explicit Face(cv::Rect rect)
+                : rect(std::move(rect)) {}
 
-        Face(const cv::Point &pt1, const cv::Point &pt2, const int &detectionConfidence = 0)
-                : rect(pt1, pt2), detectionConfidence(detectionConfidence) {}
     };
 
 }

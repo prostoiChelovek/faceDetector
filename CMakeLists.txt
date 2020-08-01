@@ -5,10 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(spdlog REQUIRED)
 find_package(OpenCV 4 REQUIRED)
+find_package(dlib REQUIRED)
 
 add_library(faces "")
 
 target_link_libraries(faces ${OpenCV_LIBS})
+target_link_libraries(faces dlib::dlib)
 target_link_libraries(faces spdlog::spdlog)
 
 include_directories(src)

@@ -11,11 +11,10 @@
 #define FACES_OCVDNNDETECTOR_H
 
 #include <spdlog/spdlog.h>
-#include "spdlog/sinks/stdout_color_sinks.h"
 
 #include <opencv2/dnn.hpp>
 
-#include "Detector.h"
+#include "Detector.hpp"
 
 namespace faces {
 
@@ -49,15 +48,11 @@ namespace faces {
         cv::dnn::Net net;
 
         FACES_DECLARE_ATTRIBUTE(cv::Size, inSize)
-
         FACES_DECLARE_ATTRIBUTE(double, inScaleFactor)
-
         FACES_DECLARE_ATTRIBUTE(cv::Scalar, meanVal)
-
         FACES_DECLARE_ATTRIBUTE(bool, swaptRB)
 
         FACES_DECLARE_ATTRIBUTE(cv::String, inputName)
-
         FACES_DECLARE_ATTRIBUTE(cv::String, outputName)
 
         /**

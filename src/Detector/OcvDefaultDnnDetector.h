@@ -29,13 +29,10 @@ namespace faces {
     protected:
         FACES_OVERRIDE_ATTRIBUTE(inSize, 300, 300);
         FACES_OVERRIDE_ATTRIBUTE(inScaleFactor, 1.0)
-
         FACES_OVERRIDE_ATTRIBUTE(meanVal, 104.0, 177.0, 123.0)
-
         FACES_OVERRIDE_ATTRIBUTE(swaptRB, false)
 
         FACES_OVERRIDE_ATTRIBUTE(inputName, "data")
-
         FACES_OVERRIDE_ATTRIBUTE(outputName, "detection_out")
 
         cv::Mat prepareDetectionMat(cv::Mat &detection) override;

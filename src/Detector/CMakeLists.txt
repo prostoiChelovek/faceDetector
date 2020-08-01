@@ -3,7 +3,7 @@ target_sources(faces
         OcvDnnDetector.cpp
         OcvDefaultDnnDetector.cpp
         PUBLIC
-        Detector.h
+        Detector.hpp
         OcvDnnDetector.h
         OcvDefaultDnnDetector.h
         )

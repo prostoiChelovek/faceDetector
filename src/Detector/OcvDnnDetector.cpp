@@ -46,8 +46,9 @@ namespace faces {
 
             cv::Vec4i cords = extractPoints(detectionMat, i, img.size());
 
-            Face f({cords[0], cords[1]}, {cords[2], cords[3]},
-                   confidence * 100);
+            cv::Rect faceRect(cv::Point(cords[0], cords[1]),
+                              cv::Point(cords[2], cords[3]));
+            Face f(faceRect);
             res.emplace_back(f);
         }
 
