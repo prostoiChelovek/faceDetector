@@ -11,7 +11,7 @@
 #define FACES_DLIBSVMCLASSIFIER_H
 
 #include "DlibResnetDescriptor.h"
-#include "DescriptorsClassifier.hpp"
+#include <Recognizer/Descriptors/DescriptorsClassifier.hpp>
 
 namespace faces {
 

@@ -1,9 +1,9 @@
 target_sources(faces
         PRIVATE
         OcvDnnDetector.cpp
-        OcvDefaultDnnDetector.cpp
         PUBLIC
         Detector.hpp
         OcvDnnDetector.h
-        OcvDefaultDnnDetector.h
         )
+
+add_subdirectory(Implementations)

@@ -11,8 +11,8 @@
 
 #include <Face/Face.h>
 
-#include <Detector/OcvDefaultDnnDetector.h>
-#include <Recognizer/Descriptors/DlibResnetSvmRecognizer.h>
+#include <Detector/Implementations/OcvDefaultDnnDetector.h>
+#include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);

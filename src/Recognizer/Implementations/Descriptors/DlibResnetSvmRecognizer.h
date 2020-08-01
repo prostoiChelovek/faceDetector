@@ -10,7 +10,7 @@
 #ifndef FACES_DLIBRESNETSVMRECOGNIZER_H
 #define FACES_DLIBRESNETSVMRECOGNIZER_H
 
-#include "DescriptorsRecognizer.h"
+#include <Recognizer/Descriptors/DescriptorsRecognizer.h>
 #include "DlibResnetDescriptor.h"
 #include "DlibSvmClassifier.h"
 

@@ -17,7 +17,7 @@
 #include <spdlog/spdlog.h>
 
 #include "utils/utils.h"
-#include "Descriptor.hpp"
+#include <Recognizer/Descriptors/Descriptor.hpp>
 
 namespace faces {
 

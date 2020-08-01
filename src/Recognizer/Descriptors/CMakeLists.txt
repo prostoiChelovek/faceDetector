@@ -1,13 +1,8 @@
 target_sources(faces
         PRIVATE
         DescriptorsRecognizer.cpp
-        DlibResnetDescriptor.cpp
-        DlibSvmClassifier.cpp
         PUBLIC
         Descriptor.hpp
         DescriptorsClassifier.hpp
         DescriptorsRecognizer.h
-        DlibResnetDescriptor.h
-        DlibSvmClassifier.h
-        DlibResnetSvmRecognizer.h
         )

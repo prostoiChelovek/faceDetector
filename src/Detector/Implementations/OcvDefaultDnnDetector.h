@@ -10,7 +10,7 @@
 #ifndef FACES_OCVDEFAULTDNNDETECTOR_H
 #define FACES_OCVDEFAULTDNNDETECTOR_H
 
-#include "OcvDnnDetector.h"
+#include "Detector/OcvDnnDetector.h"
 
 
 namespace faces {

@@ -14,7 +14,6 @@
 #include <map>
 
 #include "utils/utils.h"
-#include "DlibResnetDescriptor.h"
 
 namespace faces {
 
