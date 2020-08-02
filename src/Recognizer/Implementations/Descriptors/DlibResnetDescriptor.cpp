@@ -23,7 +23,7 @@ namespace faces {
 
         std::vector<dlib::matrix<float, 0, 1>> faceDescriptorsF =
                 _descriptor(std::vector<dlib::cv_image<dlib::rgb_pixel>>{dFaceImg});
-        std::vector<DescriptorType> faceDescriptors;
+        std::vector<dlibResnet::DescriptorType> faceDescriptors;
         for (auto &desc : faceDescriptorsF) {
             std::vector<double> descVec;
             for (unsigned int r = 0; r < desc.nr(); r += 1) {
@@ -32,7 +32,7 @@ namespace faces {
             faceDescriptors.emplace_back(dlib::mat(descVec));
         }
 
-        DescriptorType descriptor = faceDescriptors[0];
+        dlibResnet::DescriptorType descriptor = faceDescriptors[0];
 
         return std::vector<double>(descriptor.begin(), descriptor.end());
     }

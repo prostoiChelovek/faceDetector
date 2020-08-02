@@ -8,13 +8,14 @@
  */
 
 #include "DlibSvmClassifier.h"
+#include "DlibResnetDescriptor.h"
 
 faces::DlibSvmClassifier::DlibSvmClassifier(std::string const &classifiersFile) {
     _load(classifiersFile);
 }
 
 void faces::DlibSvmClassifier::train(std::map<int, std::vector<double>> const &samples) {
-    std::vector<DescriptorType> descriptors;
+    std::vector<dlibResnet::DescriptorType> descriptors;
     std::vector<int> labels;
 
     for (auto const &sample : samples) {
@@ -31,20 +32,20 @@ void faces::DlibSvmClassifier::train(std::map<int, std::vector<double>> const &s
     // <- Unique labels
 
     // Init trainers ->
-    std::vector<TrainerType> trainers;
+    std::vector<dlibSvm::TrainerType> trainers;
     unsigned long numTrainers = totalLabels.size() * (totalLabels.size() - 1) / 2;
 
     for (int i = 0; i < numTrainers; i++) {
-        trainers.emplace_back(TrainerType());
-        trainers[i].set_kernel(KernelType());
+        trainers.emplace_back(dlibSvm::TrainerType());
+        trainers[i].set_kernel(dlibSvm::KernelType());
         trainers[i].set_c(10);
     }
     // <- Init trainers
 
     // Train and init classifiers ->
     int label1 = 0, label2 = 1;
-    for (TrainerType &trainer : trainers) {
-        std::vector<DescriptorType> samples4Pair;
+    for (dlibSvm::TrainerType &trainer : trainers) {
+        std::vector<dlibResnet::DescriptorType> samples4Pair;
         std::vector<double> labels4Pair;
 
         for (int i = 0; i < descriptors.size(); i++) {
@@ -76,7 +77,7 @@ void faces::DlibSvmClassifier::train(std::map<int, std::vector<double>> const &s
 int faces::DlibSvmClassifier::_classifyDescriptors(const std::vector<double> &descriptors) {
     std::map<double, int> votes;
     for (auto &faceClassifier : _classifiers) {
-        DescriptorType dlibDescriptors = dlib::mat(descriptors);
+        dlibResnet::DescriptorType dlibDescriptors = dlib::mat(descriptors);
         double prediction = faceClassifier.classify(dlibDescriptors, get_threshold());
         if (prediction == -1)
             continue;
@@ -108,7 +109,7 @@ bool faces::DlibSvmClassifier::_load(std::string const &classifiersFile) {
         _ok = true;
         if (_classifiers.empty()) {
             spdlog::error("Descriptor classifiers were loaded without errors from file {}, "
-                          "hoverer they are empty!", classifiersFile);
+                          "however they are empty!", classifiersFile);
             _ok = false;
         }
     } catch (dlib::serialization_error &e) {

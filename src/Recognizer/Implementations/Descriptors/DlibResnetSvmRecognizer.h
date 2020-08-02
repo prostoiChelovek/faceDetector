@@ -4,7 +4,7 @@
  * @date 01 Aug 2020
  * @copyright MIT License
  *
- * @brief
+ * @brief This file contains a descriptor-based face recognizer with dlib`s ResNet and OvO SVM
  */
 
 #ifndef FACES_DLIBRESNETSVMRECOGNIZER_H
@@ -16,6 +16,10 @@
 
 namespace faces {
 
+    /**
+     * An implementation of the descriptor-based face recognizer,
+     * which uses dlib`s ResNet-based descriptor and a OvO SVM classifier
+     */
     class DlibResnetSvmRecognizer : public DescriptorsRecognizer {
     public:
         FACES_MAIN_CONSTRUCTOR(DlibResnetSvmRecognizer,
