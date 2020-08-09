@@ -11,17 +11,26 @@
 
 #include <Face/Face.h>
 
+#include <Config/Config.h>
 #include <Detector/Implementations/OcvDefaultDnnDetector.h>
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
+#include "miniconf.h"
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
     spdlog::set_default_logger(console);
 
+    miniconf::Config &config = faces::Config::getConfig();
+    std::string configFile = FACES_ROOT_DIRECTORY "/config.json";
+    bool configOk = config.config(configFile);
+    if (!configOk) {
+        spdlog::warn("Cannot load a config from the file '{}', saving a default configuration", configFile);
+        config.serialize(configFile);
+    }
 
-    faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn,
-                                                      "../../data/models/deploy.prototxt",
-                                                      "../../data/models/res10_300x300_ssd_iter_140000_fp16.caffemodel");
+    config.print();
+
+    faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, config);
 
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm,
                                                           "../../data/models/dlib_face_recognition_resnet_model_v1.dat",
