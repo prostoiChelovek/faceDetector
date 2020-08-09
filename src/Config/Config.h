@@ -10,6 +10,9 @@
 #ifndef FACES_CONFIG_H
 #define FACES_CONFIG_H
 
+
+#include <spdlog/spdlog.h>
+
 #include <miniconf.h>
 
 #include <utils/utils.h>
@@ -19,7 +22,7 @@
 namespace faces {
 
 #define FACES_ADD_CONFIG_OPTION(name, shortFlag, defaultVal, valueRequired, valueDescription) \
-        Config::getConfig().option(name).shortflag(shortFlag).defaultValue(defaultVal).required(valueRequired).description(valueDescription);
+        Config::getInstance().config.option(name).shortflag(shortFlag).defaultValue(defaultVal).required(valueRequired).description(valueDescription);
 
 #define FACES_AUGMENT_CONFIG(name, ...) \
         inline static int __config_augment_dummy_fn_ ## name() { \
@@ -31,14 +34,45 @@ namespace faces {
 
     class Config {
     public:
+        miniconf::Config config = miniconf::Config();
+
         static Config &getInstance() {
             static Config instance;
             return instance;
         }
 
-        static miniconf::Config &getConfig() {
-            return _config;
+        /* Accesses the configuration value
+         *
+         * If the configuration value does not exist, an empty Value object is returned.
+         */
+        miniconf::Value &operator[](const std::string &flag) {
+            return config[flag];
         }
+
+        /* Accesses the configuration value
+         *
+         * If the configuration value does not exist, std::out_of_range exception is thrown
+         */
+        miniconf::Value const &operator[](const std::string &flag) const {
+            return config[flag];
+        }
+
+        [[nodiscard]] std::string getDataPath(std::string const &name,
+                                              std::string const &dataSeparator = "") const {
+            try {
+                return config["dataDirectory"].getString() + dataSeparator + "/" + config[name].getString();
+            } catch (std::out_of_range &e) {
+                spdlog::error("Cannot get a data entry with the name '{}' from '{}' in the config!",
+                              name, dataSeparator);
+                return "";
+            }
+        }
+
+        [[nodiscard]] std::string getModelPath(std::string const &name,
+                                               std::string const &dataSeparator = "") const {
+            return getDataPath(name, "/models" + dataSeparator);
+        }
+
 
         Config(Config const &) = delete;
 
@@ -46,8 +80,6 @@ namespace faces {
 
     protected:
         Config() = default;
-
-        inline static miniconf::Config _config = miniconf::Config();
 
     };
 

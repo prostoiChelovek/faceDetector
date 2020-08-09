@@ -11,6 +11,14 @@
 
 namespace faces {
 
+    OcvDnnDetector::OcvDnnDetector(Config const &config) {
+        std::string configFile = config.getModelPath("OcvDnnDetector.configFile");
+        std::string weightFile = config.getModelPath("OcvDnnDetector.weightFile");
+        if (readNet(configFile, weightFile)) {
+            _ok = true;
+        }
+    }
+
     OcvDnnDetector::OcvDnnDetector(std::string const &configFile, std::string const &weightFile) {
         if (readNet(configFile, weightFile)) {
             _ok = true;

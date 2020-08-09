@@ -11,6 +11,11 @@
 
 namespace faces {
 
+    DlibResnetDescriptor::DlibResnetDescriptor(Config const &config) {
+        std::string const &model = config.getModelPath("DlibResnetDescriptor.model");
+        _load(model);
+    }
+
     DlibResnetDescriptor::DlibResnetDescriptor(std::string const &model) {
         _load(model);
     }

@@ -82,7 +82,9 @@ namespace faces {
     public:
         FACES_OVERRIDE_ATTRIBUTE(threshold, 0.3)
 
-        FACES_MAIN_CONSTRUCTOR(explicit DlibSvmClassifier, std::string const &classifiersFile);
+        FACES_MAIN_CONSTRUCTOR(explicit DlibSvmClassifier, Config const &config);
+
+        explicit DlibSvmClassifier(std::string const &classifiersFile);
 
         void train(std::map<int, std::vector<double>> const &samples) override;
 
@@ -106,6 +108,10 @@ namespace faces {
     };
 
     FACES_REGISTER_SUBCLASS(DescriptorsClassifier, DlibSvmClassifier, DlibSvm)
+
+    FACES_AUGMENT_CONFIG(DlibSvmClassifier,
+                         FACES_ADD_CONFIG_OPTION("DlibSvmClassifier.classifiers", "classifiers", "", false,
+                                                 "A path to a model file of Dlib-based SVM OvO face descriptor classifier"))
 
 }
 

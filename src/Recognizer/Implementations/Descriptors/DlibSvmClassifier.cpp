@@ -10,6 +10,11 @@
 #include "DlibSvmClassifier.h"
 #include "DlibResnetDescriptor.h"
 
+faces::DlibSvmClassifier::DlibSvmClassifier(Config const &config) {
+    std::string const &classifiersFile = config.getDataPath("DlibSvmClassifier.classifiers");
+    _load(classifiersFile);
+}
+
 faces::DlibSvmClassifier::DlibSvmClassifier(std::string const &classifiersFile) {
     _load(classifiersFile);
 }

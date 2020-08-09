@@ -13,6 +13,9 @@
 #include <spdlog/spdlog.h>
 
 #include <opencv2/dnn.hpp>
+#include <utility>
+
+#include <Config/Config.h>
 
 #include "Detector.hpp"
 
@@ -25,12 +28,14 @@ namespace faces {
     public:
         FACES_DECLARE_ATTRIBUTE(float, confidenceThreshold)
 
+        FACES_MAIN_CONSTRUCTOR(explicit OcvDnnDetector, Config const &config);
+
         /**
          * Initializes the object and loads a neural network from the given files
          *
          * @see readNet
          */
-        FACES_MAIN_CONSTRUCTOR(OcvDnnDetector, std::string const &configFile, std::string const &weightFile);
+        OcvDnnDetector(std::string const &configFile, std::string const &weightFile);
 
         /**
          * Reads a DNN from the given files
@@ -48,11 +53,15 @@ namespace faces {
         cv::dnn::Net net;
 
         FACES_DECLARE_ATTRIBUTE(cv::Size, inSize)
+
         FACES_DECLARE_ATTRIBUTE(double, inScaleFactor)
+
         FACES_DECLARE_ATTRIBUTE(cv::Scalar, meanVal)
+
         FACES_DECLARE_ATTRIBUTE(bool, swaptRB)
 
         FACES_DECLARE_ATTRIBUTE(cv::String, inputName)
+
         FACES_DECLARE_ATTRIBUTE(cv::String, outputName)
 
         /**
@@ -121,6 +130,15 @@ namespace faces {
                                         cv::Size const &imgSize) = 0;
 
     };
+
+    FACES_AUGMENT_CONFIG(OcvDnnDetector,
+                         FACES_ADD_CONFIG_OPTION("OcvDnnDetector.configFile", "configFile", "",
+                                                 false,
+                                                 "A path to a config file of OpenCV DNN-based face detector")
+                                 FACES_ADD_CONFIG_OPTION("OcvDnnDetector.weightFile", "weightFile", "",
+                                                         false,
+                                                         "A path to a config file of OpenCV DNN-based face detector")
+    )
 
 }
 

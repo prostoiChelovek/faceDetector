@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
     spdlog::set_default_logger(console);
 
-    miniconf::Config &config = faces::Config::getConfig();
+    faces::Config &configInstance = faces::Config::getInstance();
+    miniconf::Config &config = configInstance.config;
     std::string configFile = FACES_ROOT_DIRECTORY "/config.json";
     bool configOk = config.config(configFile);
     if (!configOk) {
@@ -30,11 +31,9 @@ int main(int argc, char **argv) {
 
     config.print();
 
-    faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, config);
+    faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
 
-    faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm,
-                                                          "../../data/models/dlib_face_recognition_resnet_model_v1.dat",
-                                                          "../../data/classifiers.dat");
+    faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
 
     if (detector == nullptr || recognizer == nullptr) {
         spdlog::error("Cannot initialize face detector or/and recognizer");

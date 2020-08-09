@@ -16,6 +16,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <Config/Config.h>
+
 #include "utils/utils.h"
 #include <Recognizer/Descriptors/Descriptor.hpp>
 
@@ -79,7 +81,9 @@ namespace faces {
      */
     class DlibResnetDescriptor : public Descriptor {
     public:
-        FACES_MAIN_CONSTRUCTOR(explicit DlibResnetDescriptor, std::string const &model);
+        FACES_MAIN_CONSTRUCTOR(explicit DlibResnetDescriptor, Config const &config);
+
+        explicit DlibResnetDescriptor(std::string const &model);
 
     protected:
         FACES_OVERRIDE_ATTRIBUTE(faceSize, 150, 150)
@@ -101,6 +105,10 @@ namespace faces {
     };
 
     FACES_REGISTER_SUBCLASS(Descriptor, DlibResnetDescriptor, DlibResnet)
+
+    FACES_AUGMENT_CONFIG(DlibResnetDescriptor,
+                         FACES_ADD_CONFIG_OPTION("DlibResnetDescriptor.model", "configFile", "", false,
+                                                 "A path to a model file of Dlib-based resnet face descriptor"))
 
 }
 
