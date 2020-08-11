@@ -1,3 +1,3 @@
-[submodule "third-party/config/miniconf"]
+[submodule "third-party/miniconf"]
 	path = third-party/miniconf
 	url = git@github.com:prostoiChelovek/miniconf.git
