@@ -1,0 +1,13 @@
+{
+  "OcvDnnDetector": {
+    "configFile": "deploy.prototxt",
+    "weightFile": "res10_300x300_ssd_iter_140000_fp16.caffemodel"
+  },
+  "DlibResnetDescriptor": {
+    "model": "dlib_face_recognition_resnet_model_v1.dat"
+  },
+  "DlibSvmClassifier": {
+    "classifiers": "classifiers.dat"
+  },
+  "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data"
+}
