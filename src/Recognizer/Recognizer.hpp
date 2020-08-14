@@ -20,21 +20,6 @@ namespace faces {
     class Recognizer {
     public:
         /**
-         * Estimate a label of the given face on photo.
-         * This is a wrapper around the actual recognition method, which is just checking the @ref _ok flag
-         *
-         * @param img - photo, face was detected on
-         * @param face - the face, estimate a label for ROI of which
-         */
-        void recognize(cv::Mat const &img, Face &face) {
-            if (!_ok) {
-                return;
-            }
-
-            _recognize(img, face);
-        }
-
-        /**
          * Estimate a label of the given face image.
          * This is a wrapper around the actual recognition method, which is just checking the @ref _ok flag
          *
@@ -45,25 +30,14 @@ namespace faces {
                 return;
             }
 
-            _recognize(face);
+            if (face.img.empty()) return;
+            face.label = _recognize(face.img);
         }
 
         /**
          * A helper method which recognizes a bunch of faces
          *
-         * @param img - photo, face was detected on
-         * @param face - the face, estimate a label for ROI of which
-         */
-        void recognize(cv::Mat const &img, std::vector<Face> &faces) {
-            for (auto &face : faces) {
-                recognize(img, face);
-            }
-        }
-
-        /**
-         * A helper method which recognizes a bunch of faces
-         *
-         * @param face - the face, estimate a label for img of which
+         * @param faces - faces, estimate a label for img of which
          */
         void recognize(std::vector<Face> &faces) {
             for (auto &face : faces) {
@@ -88,27 +62,6 @@ namespace faces {
     protected:
         /// the flag which indicates the readiness of the recognizer
         bool _ok = false;
-
-        /**
-         * Estimate a label of the given face on photo.
-         *
-         * @param img - photo, face was detected on
-         * @param face - the face, estimate a label for ROI of which
-         */
-        void _recognize(cv::Mat const &img, Face &face) {
-            const cv::Mat faceRoi = img(face.rect);
-            face.label = _recognize(faceRoi);
-        }
-
-        /**
-         * Estimate a label of the given face on its image
-         *
-         * @param face - the face, estimate a label for image of which
-         */
-        void _recognize(Face &face) {
-            if (face.img.empty()) return;
-            face.label = _recognize(face.img);
-        }
 
         /**
          * Estimate a label of the given face image

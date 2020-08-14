@@ -39,7 +39,7 @@ namespace faces {
  * It creates an inline function and assigns its return value to a global variable and thus calling it
  *
  * @param name  - unique postfix for function and variable
- * @param ...   - list of \ref FACES_ADD_CONFIG_OPTION macro calls; basically, it is a function body
+ * @param ...   - list of @ref FACES_ADD_CONFIG_OPTION macro calls; basically, it is a function body
  */
 #define FACES_AUGMENT_CONFIG(name, ...) \
         inline static int __config_augment_dummy_fn_ ## name() { \
