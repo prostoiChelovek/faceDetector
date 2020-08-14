@@ -18,15 +18,11 @@ namespace faces {
         return _ok;
     }
 
-    void DescriptorsRecognizer::_recognize(cv::Mat const &img, Face &face) {
-        if (!_checkOk()) return;
+    int DescriptorsRecognizer::_recognize(cv::Mat const &img) {
+        if (!_checkOk()) return -2;
 
-        const cv::Mat faceRoi = img(face.rect);
-
-        std::vector<double> descriptors = descriptor->computeDescriptors(faceRoi);
-        int label = classifier->classifyDescriptors(descriptors);
-
-        face.label = label;
+        std::vector<double> descriptors = descriptor->computeDescriptors(img);
+        return classifier->classifyDescriptors(descriptors);
     }
 
     void DescriptorsRecognizer::train(std::map<int, cv::Mat &> const &samples) {

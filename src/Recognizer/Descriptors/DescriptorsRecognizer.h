@@ -57,14 +57,14 @@ namespace faces {
         bool _checkOk();
 
         /**
-         * Estimates a label by generating a descriptor for the given face and classifying it;
+         * Estimates a label by generating a descriptor for the given face image and classifying it;
          * It works only when both `descriptor` and `classifier` are ok
          *
-         * @param img - a photo, face was detected on
-         * @param face - the face, estimate a label for ROI of which
+         * @param img - a photo of the face
+         *
+         * @returns a label of the face
          */
-        void _recognize(cv::Mat const &img, Face &face) override;
-
+        int _recognize(cv::Mat const &img) override;
     };
 
 }

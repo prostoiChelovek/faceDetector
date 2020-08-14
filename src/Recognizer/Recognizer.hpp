@@ -35,6 +35,20 @@ namespace faces {
         }
 
         /**
+         * Estimate a label of the given face image.
+         * This is a wrapper around the actual recognition method, which is just checking the @ref _ok flag
+         *
+         * @param face - the face, estimate a label for img of which
+         */
+        void recognize(Face &face) {
+            if (!_ok) {
+                return;
+            }
+
+            _recognize(face);
+        }
+
+        /**
          * A helper method which recognizes a bunch of faces
          *
          * @param img - photo, face was detected on
@@ -43,6 +57,17 @@ namespace faces {
         void recognize(cv::Mat const &img, std::vector<Face> &faces) {
             for (auto &face : faces) {
                 recognize(img, face);
+            }
+        }
+
+        /**
+         * A helper method which recognizes a bunch of faces
+         *
+         * @param face - the face, estimate a label for img of which
+         */
+        void recognize(std::vector<Face> &faces) {
+            for (auto &face : faces) {
+                recognize(face);
             }
         }
 
@@ -70,7 +95,29 @@ namespace faces {
          * @param img - photo, face was detected on
          * @param face - the face, estimate a label for ROI of which
          */
-        virtual void _recognize(cv::Mat const &img, Face &face) = 0;
+        void _recognize(cv::Mat const &img, Face &face) {
+            const cv::Mat faceRoi = img(face.rect);
+            face.label = _recognize(faceRoi);
+        }
+
+        /**
+         * Estimate a label of the given face on its image
+         *
+         * @param face - the face, estimate a label for image of which
+         */
+        void _recognize(Face &face) {
+            if (face.img.empty()) return;
+            face.label = _recognize(face.img);
+        }
+
+        /**
+         * Estimate a label of the given face image
+         *
+         * @param img - face ROI
+         *
+         * @returns a label of the face
+         */
+        virtual int _recognize(cv::Mat const &img) = 0;
 
     };
 

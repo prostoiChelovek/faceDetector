@@ -56,7 +56,8 @@ namespace faces {
 
             cv::Rect faceRect(cv::Point(cords[0], cords[1]),
                               cv::Point(cords[2], cords[3]));
-            Face f(faceRect);
+            cv::Mat faceRoi(img(faceRect));
+            Face f(faceRoi, faceRect);
             res.emplace_back(f);
         }
 

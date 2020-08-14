@@ -47,9 +47,8 @@ int main(int argc, char **argv) {
     cv::Mat test = cv::imread("../../data/test.jpg");
 
     std::vector<faces::Face> detected = detector->detect(test);
+    recognizer->recognize(detected);
     for (auto &f : detected) {
-        recognizer->recognize(test, f);
-
         cv::rectangle(test, f.rect, {0, 255, 0});
         cv::putText(test, std::to_string(f.label), f.rect.tl(),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
