@@ -9,12 +9,14 @@
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <miniconf.h>
+
 #include <Face/Face.h>
 
 #include <Config/Config.h>
 #include <Detector/Implementations/OcvDefaultDnnDetector.h>
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
-#include "miniconf.h"
+#include <Landmarker/Implementations/DlibLandmarker.h>
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
@@ -35,12 +37,14 @@ int main(int argc, char **argv) {
 
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
 
-    if (detector == nullptr || recognizer == nullptr) {
-        spdlog::error("Cannot initialize face detector or/and recognizer");
+    faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
+
+    if (detector == nullptr || recognizer == nullptr || landmarker == nullptr) {
+        spdlog::error("Cannot initialize face detector, recognizer or landmarker");
         return 1;
     }
-    if (!detector->isOk() || !recognizer->isOk()) {
-        spdlog::error("Cannot load face detector or/and recognizer");
+    if (!detector->isOk() || !recognizer->isOk() || !landmarker->isOk()) {
+        spdlog::error("Cannot load face detector, recognizer or landmarker");
         return 1;
     }
 
@@ -48,10 +52,17 @@ int main(int argc, char **argv) {
 
     std::vector<faces::Face> detected = detector->detect(test);
     recognizer->recognize(detected);
+    landmarker->detect(detected);
     for (auto &f : detected) {
         cv::rectangle(test, f.rect, {0, 255, 0});
         cv::putText(test, std::to_string(f.label), f.rect.tl(),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, {255, 255, 255}, 2);
+
+        for (cv::Point const &pt : f.landmarks) {
+            cv::Point realPt = f.rect.tl() + pt;
+            cv::circle(test, realPt, 2, {0, 0, 255}, cv::FILLED);
+        }
+
         std::cout << f.rect << " " << f.label << std::endl;
     }
 

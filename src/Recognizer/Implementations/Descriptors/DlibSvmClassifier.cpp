@@ -3,8 +3,6 @@
  * @author Люнгрин Андрей aka prostoichelovek <iam.prostoi.chelovek@gmail.ru>
  * @date 01 Aug 2020
  * @copyright MIT License
- *
- * @brief
  */
 
 #include "DlibSvmClassifier.h"

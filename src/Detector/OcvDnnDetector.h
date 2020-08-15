@@ -3,8 +3,6 @@
  * @author Люнгрин Андрей aka prostoichelovek <iam.prostoi.chelovek@gmail.ru>
  * @date 19 Jul 2020
  * @copyright MIT License
- *
- * @brief
  */
 
 #ifndef FACES_OCVDNNDETECTOR_H

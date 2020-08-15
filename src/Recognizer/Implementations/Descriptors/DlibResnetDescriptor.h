@@ -107,7 +107,7 @@ namespace faces {
     FACES_REGISTER_SUBCLASS(Descriptor, DlibResnetDescriptor, DlibResnet)
 
     FACES_AUGMENT_CONFIG(DlibResnetDescriptor,
-                         FACES_ADD_CONFIG_OPTION("DlibResnetDescriptor.model", "configFile", "", false,
+                         FACES_ADD_CONFIG_OPTION("DlibResnetDescriptor.model", "mode", "", false,
                                                  "A path to a model file of Dlib-based resnet face descriptor"))
 
 }
