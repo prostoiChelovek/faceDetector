@@ -10,6 +10,12 @@
 #ifndef FACES_UTILS_H
 #define FACES_UTILS_H
 
+#include <dlib/opencv.h>
+#include <dlib/geometry/vector.h>
+
+#include <opencv2/core/types.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "factory.hpp"
 
 /**
@@ -54,7 +60,28 @@
 
 
 namespace faces {
+    /**
+     * Converts a vector of opencv points to a vector of dlib points
+     */
+    std::vector<dlib::point> dPointsVec(std::vector<cv::Point> const &pts);
 
+    /**
+     * Converts an opencv rectangle to dlib's
+     */
+    dlib::rectangle dRect(cv::Rect const &r);
+
+    /**
+     * Converts dlib's matrix to opencv`s
+     *
+     * @tparam T - a type of dlib`s matrix; there is no need to specify it by hand
+     */
+    template<typename T>
+    cv::Mat dlibMatrix2CvMat(dlib::matrix<T> &matr) {
+        cv::Mat mat = dlib::toMat(matr);
+        cv::Mat bgr;
+        cvtColor(mat, bgr, cv::COLOR_RGB2BGR);
+        return bgr;
+    }
 }
 
 #endif //FACES_UTILS_H

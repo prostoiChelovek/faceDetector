@@ -15,8 +15,9 @@
 
 #include <Config/Config.h>
 #include <Detector/Implementations/OcvDefaultDnnDetector.h>
-#include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 #include <Landmarker/Implementations/DlibLandmarker.h>
+#include <Aligner/Implementations/DlibChipAligner.h>
+#include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
@@ -34,25 +35,27 @@ int main(int argc, char **argv) {
     config.print();
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
-
+    faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
+    faces::Aligner *aligner = FACES_CREATE_INSTANCE(Aligner, DlibChip, configInstance);
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
 
-    faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
-
-    if (detector == nullptr || recognizer == nullptr || landmarker == nullptr) {
-        spdlog::error("Cannot initialize face detector, recognizer or landmarker");
+    if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr) {
+        spdlog::error("Cannot initialize face detector, recognizer, landmarker or aligner");
         return 1;
     }
-    if (!detector->isOk() || !recognizer->isOk() || !landmarker->isOk()) {
-        spdlog::error("Cannot load face detector, recognizer or landmarker");
+    if (!detector->isOk() || !recognizer->isOk() || !landmarker->isOk() || !aligner->isOk()) {
+        spdlog::error("Cannot load face detector, recognizer, landmarker or aligner");
         return 1;
     }
 
-    cv::Mat test = cv::imread("../../data/test.jpg");
+    cv::Mat test = cv::imread(configInstance.getDataPath("testImage"));
 
     std::vector<faces::Face> detected = detector->detect(test);
-    recognizer->recognize(detected);
     landmarker->detect(detected);
+    aligner->align(detected, test);
+    recognizer->recognize(detected);
+
+    int i = 0;
     for (auto &f : detected) {
         cv::rectangle(test, f.rect, {0, 255, 0});
         cv::putText(test, std::to_string(f.label), f.rect.tl(),
@@ -60,10 +63,15 @@ int main(int argc, char **argv) {
 
         for (cv::Point const &pt : f.landmarks) {
             cv::Point realPt = f.rect.tl() + pt;
-            cv::circle(test, realPt, 2, {0, 0, 255}, cv::FILLED);
+            cv::circle(test, realPt, 2, {0, 0, 255}, cv::FILLED, cv::LINE_AA);
         }
 
+        std::string faceWinName = std::to_string(i) + " " + std::to_string(f.label);
+        cv::namedWindow(faceWinName, cv::WINDOW_GUI_NORMAL | cv::WINDOW_AUTOSIZE);
+        cv::imshow(faceWinName, f.img);
+
         std::cout << f.rect << " " << f.label << std::endl;
+        ++i;
     }
 
     cv::imshow("test", test);

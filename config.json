@@ -12,5 +12,10 @@
   "DlibSvmClassifier": {
     "classifiers": "classifiers.dat"
   },
+  "Aligner": {
+    "faceWidth": 150,
+    "faceHeight": 150
+  },
+  "testImage": "test.jpg",
   "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data"
 }

@@ -41,6 +41,11 @@ namespace faces {
         Face(cv::Mat img, cv::Rect rect)
                 : img(std::move(img)), rect(std::move(rect)) {}
 
+        /**
+         * @return face @ref landmarks offset by the top-left corner of the @ref rect
+         */
+        [[nodiscard]] std::vector<cv::Point> getRectLandmarks() const;
+
     };
 
 }
