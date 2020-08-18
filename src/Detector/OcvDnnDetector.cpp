@@ -54,6 +54,8 @@ namespace faces {
 
             cv::Rect faceRect(cv::Point(cords[0], cords[1]),
                               cv::Point(cords[2], cords[3]));
+            // constrain the rect within the image boundaries
+            faceRect &= cv::Rect({0, 0}, img.size());
             cv::Mat faceRoi(img(faceRect));
             Face f(faceRoi, faceRect);
             res.emplace_back(f);

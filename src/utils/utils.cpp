@@ -23,4 +23,8 @@ namespace faces {
         return dlib::rectangle((long) r.tl().x, (long) r.tl().y, (long) r.br().x - 1, (long) r.br().y - 1);
     }
 
+    double getDist(cv::Point const &a, cv::Point const &b) {
+        return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
+    }
+
 }

@@ -1,7 +1,6 @@
 target_sources(faces
         PRIVATE
+        CentroidTracker.cpp
         PUBLIC
-        Tracker.hpp
+        CentroidTracker.h
         )
-
-add_subdirectory(Implementations)

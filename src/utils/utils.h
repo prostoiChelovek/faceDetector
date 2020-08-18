@@ -82,6 +82,12 @@ namespace faces {
         cvtColor(mat, bgr, cv::COLOR_RGB2BGR);
         return bgr;
     }
+
+    /**
+     * @return a distance between the given two points
+     */
+    double getDist(cv::Point const &a, cv::Point const &b);
+
 }
 
 #endif //FACES_UTILS_H
