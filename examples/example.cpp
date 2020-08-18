@@ -18,6 +18,7 @@
 #include <Landmarker/Implementations/DlibLandmarker.h>
 #include <Aligner/Implementations/DlibChipAligner.h>
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
+#include <Tracker/Implementations/CentroidTracker.h>
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
@@ -38,44 +39,77 @@ int main(int argc, char **argv) {
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
     faces::Aligner *aligner = FACES_CREATE_INSTANCE(Aligner, DlibChip, configInstance);
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
+    faces::Tracker *tracker = FACES_CREATE_INSTANCE(Tracker, Centroid);
 
-    if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr) {
-        spdlog::error("Cannot initialize face detector, recognizer, landmarker or aligner");
+    if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr
+        || tracker == nullptr) {
+        spdlog::error("Cannot initialize some component!");
         return 1;
     }
-    if (!detector->isOk() || !recognizer->isOk() || !landmarker->isOk() || !aligner->isOk()) {
-        spdlog::error("Cannot load face detector, recognizer, landmarker or aligner");
+    if (!detector->isOk() || !recognizer->isOk() || !landmarker->isOk() || !aligner->isOk()
+        || !tracker->isOk()) {
+        spdlog::error("Cannot load something!");
         return 1;
     }
 
-    cv::Mat test = cv::imread(configInstance.getDataPath("testImage"));
+    cv::VideoCapture cap(0);
+    cv::Mat test, prevTest;
+    std::vector<faces::Face> detected, prevDetected;
+    std::vector<std::pair<int, int>> tracked;
 
-    std::vector<faces::Face> detected = detector->detect(test);
-    landmarker->detect(detected);
-    aligner->align(detected, test);
-    recognizer->recognize(detected);
+    while (cap.isOpened()) {
+        cap >> test;
 
-    int i = 0;
-    for (auto &f : detected) {
-        cv::rectangle(test, f.rect, {0, 255, 0});
-        cv::putText(test, std::to_string(f.label), f.rect.tl(),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, {255, 255, 255}, 2);
-
-        for (cv::Point const &pt : f.landmarks) {
-            cv::Point realPt = f.rect.tl() + pt;
-            cv::circle(test, realPt, 2, {0, 0, 255}, cv::FILLED, cv::LINE_AA);
+        detected = detector->detect(test);
+        landmarker->detect(detected);
+        aligner->align(detected, test);
+        recognizer->recognize(detected);
+        if (!prevTest.empty()) {
+            tracked = tracker->track(prevDetected, detected, prevTest, test);
         }
 
-        std::string faceWinName = std::to_string(i) + " " + std::to_string(f.label);
-        cv::namedWindow(faceWinName, cv::WINDOW_GUI_NORMAL | cv::WINDOW_AUTOSIZE);
-        cv::imshow(faceWinName, f.img);
+        for (std::size_t i = 0; i < detected.size(); ++i) {
+            faces::Face const &f = detected[i];
 
-        std::cout << f.rect << " " << f.label << std::endl;
-        ++i;
+            cv::rectangle(test, f.rect, {0, 255, 0});
+            cv::putText(test, std::to_string(f.label), f.rect.tl(),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.7, {255, 255, 255}, 2);
+
+            for (cv::Point const &pt : f.landmarks) {
+                cv::Point realPt = f.rect.tl() + pt;
+                cv::circle(test, realPt, 2, {0, 0, 255}, cv::FILLED, cv::LINE_AA);
+            }
+
+            std::string faceWinName = std::to_string(i) + " " + std::to_string(f.label);
+            cv::namedWindow(faceWinName, cv::WINDOW_GUI_NORMAL | cv::WINDOW_AUTOSIZE);
+            cv::imshow(faceWinName, f.img);
+
+            // std::cout << f.rect << " " << f.label << std::endl;
+        }
+
+        for (auto const &trackedPair : tracked) {
+            int const &prev = trackedPair.first;
+            int const &actual = trackedPair.second;
+            if (prev != -1 && actual != -1) {
+                cv::Point prevCenter = (prevDetected[prev].rect.br() + prevDetected[prev].rect.tl()) / 2;
+                cv::Point actualCenter = (detected[actual].rect.br() + detected[actual].rect.tl()) / 2;
+                cv::line(test, prevCenter, actualCenter, {255, 0, 0}, 2);
+            } else {
+                int nonMatchedIdx = std::max(prev, actual);
+                std::vector<faces::Face> const &nonMatchedFrom = prev == -1 ? detected : prevDetected;
+                faces::Face const &nonMatchedFace = nonMatchedFrom[nonMatchedIdx];
+                cv::Point nonMatchedCenter = (nonMatchedFace.rect.br() + nonMatchedFace.rect.tl()) / 2;
+
+                cv::circle(test, nonMatchedCenter, 5, {0, 255, 255}, cv::FILLED);
+            }
+        }
+
+        prevDetected = detected;
+        prevTest = test;
+
+        cv::imshow("test", test);
+        cv::waitKey(1);
     }
-
-    cv::imshow("test", test);
-    cv::waitKey(0);
 
     return 0;
 }
