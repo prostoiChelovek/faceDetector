@@ -24,7 +24,7 @@ namespace faces {
         FACES_MAIN_CONSTRUCTOR(CentroidTracker);
 
     protected:
-        using DistancePairsT = std::map<std::size_t, std::vector<double>>;
+        using PointDistancesT = std::vector<std::vector<double>>;
 
         std::vector<std::pair<int, int>> _track(std::vector<Face> const &prevFaces,
                                                 std::vector<Face> const &actualFaces,
@@ -38,8 +38,8 @@ namespace faces {
         /**
          * @return distances from point in vector 'a' to all points from 'b'
          */
-        [[nodiscard]] static DistancePairsT _getDistances(std::vector<cv::Point> const &a,
-                                                          std::vector<cv::Point> const &b);
+        [[nodiscard]] static PointDistancesT _getDistances(std::vector<cv::Point> const &a,
+                                                           std::vector<cv::Point> const &b);
     };
 
     FACES_REGISTER_SUBCLASS(Tracker, CentroidTracker, Centroid)

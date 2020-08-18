@@ -22,9 +22,9 @@ namespace faces {
         std::vector<cv::Point> prevCentroids = _getCentroids(prevFaces);
         std::vector<cv::Point> actualCentroids = _getCentroids(actualFaces);
 
-        DistancePairsT distancePairs = _getDistances(prevCentroids, actualCentroids);
-        for (auto &pairs : distancePairs) {
-            std::vector<double> &distances = pairs.second;
+        PointDistancesT allDistances = _getDistances(prevCentroids, actualCentroids);
+        for (std::size_t i = 0; i < allDistances.size(); ++i) {
+            std::vector<double> &distances = allDistances[i];
 
             auto minDistance = std::min_element(distances.begin(), distances.end());
             int matchingIdx = -1;
@@ -33,7 +33,7 @@ namespace faces {
                 *minDistance = -1;
                 actualCentroids[matchingIdx] = {-1, -1};
             }
-            res.emplace_back(pairs.first, matchingIdx);
+            res.emplace_back(i, matchingIdx);
         }
 
         for (std::size_t i = 0; i < actualCentroids.size(); ++i) {
@@ -52,13 +52,13 @@ namespace faces {
         return res;
     }
 
-    CentroidTracker::DistancePairsT CentroidTracker::_getDistances(std::vector<cv::Point> const &a,
-                                                                   std::vector<cv::Point> const &b) {
-        DistancePairsT res;
-        for (std::size_t i = 0; i < a.size(); ++i) {
+    CentroidTracker::PointDistancesT CentroidTracker::_getDistances(std::vector<cv::Point> const &a,
+                                                                    std::vector<cv::Point> const &b) {
+        PointDistancesT res;
+        for (const auto &aEl : a) {
             for (auto const &bEl : b) {
-                double distance = getDist(a[i], bEl);
-                res[i].emplace_back(distance);
+                double distance = getDist(aEl, bEl);
+                res.emplace_back(distance);
             }
         }
         return res;
