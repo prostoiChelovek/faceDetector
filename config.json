@@ -17,6 +17,6 @@
     "faceHeight": 150
   },
   "testImage": "test.jpg",
-  "testVideo": "classroom.mp4",
+  "testVideo": "test.mp4",
   "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data"
 }

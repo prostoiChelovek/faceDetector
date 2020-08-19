@@ -20,6 +20,12 @@
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 #include <Tracker/Implementations/CentroidTracker.h>
 
+namespace faces {
+    FACES_AUGMENT_CONFIG(test,
+                         FACES_ADD_CONFIG_OPTION("testVideo", "video", "", false,
+                                                 "A video for testing"))
+}
+
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
     spdlog::set_default_logger(console);
@@ -52,7 +58,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    cv::VideoCapture cap(0);
+    cv::VideoCapture cap(configInstance.getDataPath("testVideo"));
     cv::Mat test, prevTest;
     std::vector<faces::Face> detected, prevDetected;
     std::vector<std::pair<int, int>> tracked;

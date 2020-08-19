@@ -55,10 +55,11 @@ namespace faces {
     CentroidTracker::PointDistancesT CentroidTracker::_getDistances(std::vector<cv::Point> const &a,
                                                                     std::vector<cv::Point> const &b) {
         PointDistancesT res;
-        for (const auto &aEl : a) {
-            for (auto const &bEl : b) {
-                double distance = getDist(aEl, bEl);
-                res.emplace_back(distance);
+        for (const auto &firstPt : a) {
+            res.emplace_back(std::vector<double>{});
+            for (auto const &secondPt : b) {
+                double distance = getDist(firstPt, secondPt);
+                res.back().emplace_back(distance);
             }
         }
         return res;
