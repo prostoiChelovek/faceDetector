@@ -35,11 +35,6 @@ namespace faces {
          */
         [[nodiscard]] static std::vector<cv::Point> _getCentroids(std::vector<Face> const &faces);
 
-        /**
-         * @return distances from point in vector 'a' to all points from 'b'
-         */
-        [[nodiscard]] static PointDistancesT _getDistances(std::vector<cv::Point> const &a,
-                                                           std::vector<cv::Point> const &b);
     };
 
     FACES_REGISTER_SUBCLASS(Tracker, CentroidTracker, Centroid)
