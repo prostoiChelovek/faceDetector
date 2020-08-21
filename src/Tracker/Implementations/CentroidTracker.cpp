@@ -5,6 +5,7 @@
  * @copyright MIT License
  */
 
+#include <numeric>
 #include "CentroidTracker.h"
 
 namespace faces {
@@ -18,6 +19,7 @@ namespace faces {
                                                              cv::Mat const &prevImg,
                                                              cv::Mat const &actualImg) {
         std::vector<std::pair<int, int>> res;
+        std::map<std::size_t, std::pair<std::size_t, double>> candidates;
 
         std::vector<cv::Point> prevCentroids = _getCentroids(prevFaces);
         std::vector<cv::Point> actualCentroids = _getCentroids(actualFaces);
@@ -28,20 +30,37 @@ namespace faces {
                            [&](cv::Point &pt) -> double { return getDist(prevCentroids[i], pt); });
 
             auto minDistance = std::min_element(distances.begin(), distances.end());
-            int matchingIdx = -1;
             if (!distances.empty()) {
                 int idx = std::distance(distances.begin(), minDistance);
-                if (actualCentroids[idx].x != -1) {
-                    matchingIdx = idx;
-                    actualCentroids[matchingIdx].x = -1;
+
+                decltype(candidates)::iterator candidateItr;
+                bool isFoundAndGreater = (candidateItr = candidates.find(idx)) != candidates.end()
+                                         && *minDistance < candidateItr->second.second;
+                if (isFoundAndGreater || candidateItr == candidates.end()) {
+                    auto &candidate = candidates[idx];
+                    candidate.first = i;
+                    candidate.second = *minDistance;
                 }
             }
-            res.emplace_back(i, matchingIdx);
         }
 
+        for (auto const &candidate : candidates) {
+            std::size_t const &actualIdx = candidate.first;
+            std::size_t const &prevIdx = candidate.second.first;
+            res.emplace_back(prevIdx, actualIdx);
+
+            prevCentroids[prevIdx].x = -1;
+            actualCentroids[actualIdx].x = -1;
+        }
+
+        for (std::size_t i = 0; i < prevCentroids.size(); ++i) {
+            if (prevCentroids[i].x != -1) {
+                res.emplace_back(-1, i);
+            }
+        }
         for (std::size_t i = 0; i < actualCentroids.size(); ++i) {
             if (actualCentroids[i].x != -1) {
-                res.emplace_back(-1, i);
+                res.emplace_back(i, -1);
             }
         }
 

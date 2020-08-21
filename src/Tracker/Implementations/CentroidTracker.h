@@ -24,8 +24,6 @@ namespace faces {
         FACES_MAIN_CONSTRUCTOR(CentroidTracker);
 
     protected:
-        using PointDistancesT = std::vector<std::vector<double>>;
-
         std::vector<std::pair<int, int>> _track(std::vector<Face> const &prevFaces,
                                                 std::vector<Face> const &actualFaces,
                                                 cv::Mat const &prevImg, cv::Mat const &actualImg) override;
