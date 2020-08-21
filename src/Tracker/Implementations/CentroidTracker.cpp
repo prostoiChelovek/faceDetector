@@ -10,8 +10,16 @@
 
 namespace faces {
 
-    CentroidTracker::CentroidTracker() {
+    CentroidTracker::CentroidTracker(Config const &config) {
         _ok = true;
+
+        try {
+            _maxDistance = config["CentroidTracker.maxDistance"].getInt();
+        } catch (std::out_of_range &e) {
+            spdlog::error("Cannot get am option 'CentroidTracker.maxDistance' in the config!");
+            _maxDistance = INT_MAX;
+        }
+
     }
 
     std::vector<std::pair<int, int>> CentroidTracker::_track(std::vector<Face> const &prevFaces,
@@ -36,7 +44,7 @@ namespace faces {
                 decltype(candidates)::iterator candidateItr;
                 bool isFoundAndGreater = (candidateItr = candidates.find(idx)) != candidates.end()
                                          && *minDistance < candidateItr->second.second;
-                if (isFoundAndGreater || candidateItr == candidates.end()) {
+                if (*minDistance < _maxDistance && (isFoundAndGreater || candidateItr == candidates.end())) {
                     auto &candidate = candidates[idx];
                     candidate.first = i;
                     candidate.second = *minDistance;

@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
     faces::Aligner *aligner = FACES_CREATE_INSTANCE(Aligner, DlibChip, configInstance);
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
-    faces::Tracker *tracker = FACES_CREATE_INSTANCE(Tracker, Centroid);
+    faces::Tracker *tracker = FACES_CREATE_INSTANCE(Tracker, Centroid, configInstance);
 
     if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr
         || tracker == nullptr) {

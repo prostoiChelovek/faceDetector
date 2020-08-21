@@ -16,6 +16,9 @@
     "faceWidth": 150,
     "faceHeight": 150
   },
+  "CentroidTracker": {
+    "maxDistance": 250
+  },
   "testImage": "test.jpg",
   "testVideo": "test.mp4",
   "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data"
