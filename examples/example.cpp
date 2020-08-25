@@ -19,6 +19,7 @@
 #include <Aligner/Implementations/DlibChipAligner.h>
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 #include <Tracker/Implementations/CentroidTracker.h>
+#include <Database/DatabaseEntry.hpp>
 
 namespace faces {
     FACES_AUGMENT_CONFIG(test,
@@ -40,6 +41,12 @@ int main(int argc, char **argv) {
     }
 
     config.print();
+
+    faces::DatabaseEntry entry;
+    entry.set("test", 42);
+    entry.set("str", std::string("Hello, world!"));
+    std::cout << entry.get("test") << std::endl;
+    std::cout << entry.get("str") << std::endl;
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);

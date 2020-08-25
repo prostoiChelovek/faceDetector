@@ -19,6 +19,7 @@ include_directories(src)
 
 add_subdirectory(third-party)
 target_link_libraries(faces miniconf)
+target_link_libraries(faces semimap)
 add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(doc)

@@ -4,4 +4,5 @@ target_sources(faces
         PUBLIC
         utils.h
         factory.hpp
+        LookableAttributes.hpp
         )
