@@ -4,3 +4,5 @@ target_sources(faces
         DatabaseEntry.hpp
         Database.hpp
         )
+
+add_subdirectory(Implementations)
