@@ -20,12 +20,39 @@
 #include <Recognizer/Implementations/Descriptors/DlibResnetSvmRecognizer.h>
 #include <Tracker/Implementations/CentroidTracker.h>
 #include <Database/DatabaseEntry.hpp>
+#include <Database/Implementations/StandaloneDatabase.hpp>
 
 namespace faces {
     FACES_AUGMENT_CONFIG(test,
                          FACES_ADD_CONFIG_OPTION("testVideo", "video", "", false,
                                                  "A video for testing"))
 }
+
+class FaceInfo : public faces::DatabaseEntry<FaceInfo> {
+public:
+    int a = 0;
+    FACES_REGISTER_ACCESSOR(FaceInfo, a);
+
+    float b = 0.0;
+    FACES_REGISTER_ACCESSOR(FaceInfo, b);
+
+    std::string c;
+    FACES_REGISTER_ACCESSOR(FaceInfo, c);
+
+    FaceInfo()
+            : faces::DatabaseEntry<FaceInfo>(*this) {}
+
+    explicit FaceInfo(std::map<std::string, std::any> const &attributes)
+            : faces::DatabaseEntry<FaceInfo>(*this) {
+        if (!initAttributes(attributes)) {
+            throw std::logic_error("Cannot initialize attributes by the given map");
+        }
+    }
+
+    bool load() override {
+        return true;
+    }
+};
 
 int main(int argc, char **argv) {
     auto console = spdlog::stdout_color_mt("console", spdlog::color_mode::always);
@@ -42,11 +69,19 @@ int main(int argc, char **argv) {
 
     config.print();
 
-    faces::DatabaseEntry entry;
-    entry.set("test", 42);
-    entry.set("str", std::string("Hello, world!"));
-    std::cout << entry.get("test") << std::endl;
-    std::cout << entry.get("str") << std::endl;
+    faces::StandaloneDatabase<FaceInfo> db(configInstance.getDataPath("facesDatabase"));
+    if (!db.load()) {
+        spdlog::warn("Failed to load a faces database");
+
+        std::cout << "Save a new one? " << std::flush;
+        bool shouldSave = false;
+        std::cin >> shouldSave;
+        if (shouldSave) {
+            db.save();
+        }
+    }
+    FaceInfo e = db.get(0);
+    spdlog::info("Entry: a = {}; b = {}; c = {}", e.a, e.b, e.c);
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);

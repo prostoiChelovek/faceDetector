@@ -21,5 +21,6 @@
   },
   "testImage": "test.jpg",
   "testVideo": "test.mp4",
-  "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data"
+  "dataDirectory": "/home/prostoichelovek/projects/faceDetector/data",
+  "facesDatabase": "db.json"
 }

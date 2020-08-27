@@ -13,13 +13,65 @@
 #include <string>
 #include <utility>
 
-#include <semimap.h>
+#include <sstream>
 #include <any>
+
+#include <semimap.h>
 
 #define FACES_REGISTER_ACCESSOR(cls, attribute) \
     int __faces_attribute_accessor_dymmy_ ## attribute = _registerField(#attribute, &cls::attribute);
 
 namespace faces {
+
+    template<typename T>
+    std::string getTypeStr() {
+        std::string typeStr = __PRETTY_FUNCTION__;
+        std::size_t start = typeStr.find("[with T = ") + 10;
+        std::size_t end = typeStr.find(';');
+
+        return typeStr.substr(start, end - start);
+    }
+
+#define _FACES_TRY_CAST_ANY(dstType, triedType) \
+            if(value.type() == typeid(triedType)) { \
+                auto realValue = std::any_cast<triedType>(value); \
+                return static_cast<dstType>(realValue); \
+            }
+
+#define _FACES_ADD_ANY_CAST_FOR_NUM(forType) \
+            template <> \
+            forType anyCast(std::any const &value) { \
+                _FACES_TRY_CAST_ANY(forType, int) \
+                _FACES_TRY_CAST_ANY(forType, unsigned int) \
+                _FACES_TRY_CAST_ANY(forType, float) \
+                _FACES_TRY_CAST_ANY(forType, double) \
+                _FACES_TRY_CAST_ANY(forType, short) \
+                _FACES_TRY_CAST_ANY(forType, unsigned short) \
+                _FACES_TRY_CAST_ANY(forType, std::size_t) \
+                return std::any_cast<forType>(value); \
+            }
+
+    template<typename T>
+    T anyCast(std::any const &value) {
+        return std::any_cast<T>(value);
+    }
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(int)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(unsigned int)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(double)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(float)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(short)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(unsigned short)
+
+    _FACES_ADD_ANY_CAST_FOR_NUM(std::size_t)
+
+#undef _FACES_TRY_CAST_ANY
+#undef _FACES_ADD_ANY_CAST_FOR_NUM
 
     template<typename BaseClass>
     class AttributeAccessor {
@@ -30,7 +82,7 @@ namespace faces {
 
         virtual void set(BaseClass &p, std::any const &value) const = 0;
 
-        virtual std::string get(BaseClass &base) const = 0;
+        virtual std::any get(BaseClass &base) const = 0;
     };
 
     template<typename BaseClass, typename T>
@@ -43,14 +95,11 @@ namespace faces {
                 : AttributeAccessor<BaseClass>(aKey), member(t) {}
 
         void set(BaseClass &p, std::any const &value) const override {
-            (p.*member) = std::any_cast<T>(value);
+            (p.*member) = anyCast<T>(value);
         }
 
-        std::string get(BaseClass &base) const {
-            T value = base.*member;
-            std::stringstream ss;
-            ss << value;
-            return ss.str();
+        std::any get(BaseClass &base) const override {
+            return base.*member;
         }
     };
 
@@ -58,10 +107,19 @@ namespace faces {
     class LookableFields {
     public:
         void set(std::string const &name, std::any const &value) {
+            if (!_setters::contains(name)) {
+                std::stringstream ss;
+                ss << "Attribute '" << name << "' of the class '" << getTypeStr<DerivedT>() << "' not found";
+                throw std::out_of_range(ss.str());
+            }
+
             _setters::get(name)->set(_derived, value);
         }
 
-        std::string get(std::string const &name) {
+        std::any get(std::string const &name) {
+            if (!_setters::contains(name)) {
+                return std::any();
+            }
             return _setters::get(name)->get(_derived);
         }
 

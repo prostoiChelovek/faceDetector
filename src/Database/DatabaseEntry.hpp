@@ -14,15 +14,28 @@
 
 namespace faces {
 
-    class DatabaseEntry : public LookableFields<DatabaseEntry> {
+    template<typename DerivedT>
+    class DatabaseEntry : public LookableFields<DerivedT> {
     public:
-        DatabaseEntry() : LookableFields<DatabaseEntry>(*this) {}
+        bool initAttributes(std::map<std::string, std::any> const &attributes) {
+            bool ok = true;
+            for (auto const &[name, value] : attributes) {
+                try {
+                    LookableFields<DerivedT>::set(name, value);
+                } catch (std::exception const &e) {
+                    spdlog::warn("Error during initialization of database entry`s fields: {}", e.what());
+                    ok = false;
+                }
+            }
+            return ok;
+        }
 
-        int test;
-        FACES_REGISTER_ACCESSOR(DatabaseEntry, test)
+        virtual bool load() = 0;
 
-        std::string str;
-        FACES_REGISTER_ACCESSOR(DatabaseEntry, str)
+    protected:
+        explicit DatabaseEntry(DerivedT &derived) : LookableFields<DerivedT>(derived) {}
+
+        using LookableFields<DerivedT>::_registerField;
 
     };
 
