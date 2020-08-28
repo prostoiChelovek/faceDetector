@@ -92,6 +92,13 @@ int main(int argc, char **argv) {
         e.b += 1;
         db.update(entryId, e);
     }
+
+    FaceInfo testE;
+    testE.a = random() % 1024;
+    testE.b = random() % 512;
+    testE.c = std::to_string(testE.a + testE.b);
+    db.add(testE);
+
     db.save();
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);

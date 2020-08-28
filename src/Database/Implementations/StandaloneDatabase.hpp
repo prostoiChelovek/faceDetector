@@ -58,15 +58,21 @@ namespace faces {
             return res;
         }
 
-        IdentifierT add(EntryT const &entry) override {}
+        IdentifierT add(EntryT const &entry) override {
+            std::vector<IdentifierT> entries = getEntriesList();
+            IdentifierT nextId = *std::max_element(entries.begin(), entries.end()) + 1;
+
+            auto &obj = _data.get<picojson::object>();
+
+            picojson::value entryJsonValue(_entryToJson(entry));
+            obj[_getStringId(nextId)] = entryJsonValue;
+
+            return nextId;
+        }
 
         void update(IdentifierT id, EntryT const &entry) override {
             picojson::object &entryObj = _getEntryJson(id);
-
-            std::map<std::string, std::any> attributes = entry.getAttributes();
-            for (auto const &[key, value] : attributes) {
-                entryObj[key] = _anyToValue(value);
-            }
+            entryObj = _entryToJson(entry);
         }
 
         bool save() override {
@@ -118,6 +124,22 @@ namespace faces {
             }
         }
 
+        picojson::object &_getEntryJson(IdentifierT const &id) {
+            picojson::object &obj = _data.get<picojson::object>();
+
+            std::string strId = _getStringId(id);
+
+            if (obj.find(strId) == obj.end()) {
+                throw std::out_of_range("Entry with ID='" + strId + "' does not exist in the database");
+            }
+
+            picojson::value &entryJson = obj[strId];
+            if (!entryJson.is<picojson::object>()) {
+                throw std::logic_error("Entry with ID='" + strId + "' has an incorrect format");
+            }
+            return entryJson.get<picojson::object>();
+        }
+
         static std::any _valueToAny(picojson::value const &value) {
             if (value.is<bool>()) {
                 return value.get<bool>();
@@ -144,22 +166,21 @@ namespace faces {
             return picojson::value(anyCast<double>(value));
         }
 
-        picojson::object &_getEntryJson(IdentifierT const &id) {
-            picojson::object &obj = _data.get<picojson::object>();
-
+        static std::string _getStringId(IdentifierT const &id) {
             std::stringstream ss;
             ss << id;
-            std::string strId = ss.str();
+            return ss.str();
+        }
 
-            if (obj.find(strId) == obj.end()) {
-                throw std::out_of_range("Entry with ID='" + strId + "' does not exist in the database");
+        static picojson::object _entryToJson(EntryT const &entry) {
+            picojson::object res;
+
+            const std::map<std::string, std::any> attributes = entry.getAttributes();
+            for (auto const &[key, value] : attributes) {
+                res[key] = _anyToValue(value);
             }
 
-            picojson::value &entryJson = obj[strId];
-            if (!entryJson.is<picojson::object>()) {
-                throw std::logic_error("Entry with ID='" + strId + "' has an incorrect format");
-            }
-            return entryJson.get<picojson::object>();
+            return res;
         }
 
     };
