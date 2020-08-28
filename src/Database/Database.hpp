@@ -4,7 +4,7 @@
  * @date 26 Aug 2020
  * @copyright MIT License
  *
- * @brief
+ * @brief This file contains a base class for databases
  */
 
 #ifndef FACES_DATABASE_HPP
@@ -14,6 +14,12 @@
 
 namespace faces {
 
+    /**
+     * A base class for all of the face databases
+     *
+     * @tparam EntryT       - type of the stored information, should be derived from faces::DatabaseEntry
+     * @tparam IdentifierT  - type of the identifier of database entries (key)
+     */
     template<typename EntryT, typename IdentifierT>
     class Database {
     public:
@@ -21,16 +27,51 @@ namespace faces {
                       "EntryT of the Database should be a subclass of faces::DatabaseEntry, "
                       "and provide access to its protected constructor");
 
+        /**
+         * @param id - identifier of the entry
+         *
+         * @throws std::out_of_range - if an entry with the given id is not found
+         *
+         * @return an entry with the given id
+         */
         virtual EntryT get(IdentifierT id) = 0;
 
+        /**
+         * @return a vector with ids from database
+         */
         virtual std::vector<IdentifierT> getEntriesList() = 0;
 
+        /**
+         * Adds a new entry to the database
+         *
+         * @param entry - an entry to add
+         *
+         * @return id of the added entry
+         */
         virtual IdentifierT add(EntryT const &entry) = 0;
 
+        /**
+         * Updates the entry
+         *
+         * @param id    - id of the entry
+         * @param entry - a new value
+         *
+         * @throws std::out_of_range - if an entry with the given id is not found
+         */
         virtual void update(IdentifierT id, EntryT const &entry) = 0;
 
+        /**
+         * Saves a database
+         *
+         * @return a successfulness of the operation
+         */
         virtual bool save() = 0;
 
+        /**
+         * Loads a database
+         *
+         * @return a successfulness of the operation
+         */
         virtual bool load() = 0;
 
     };
