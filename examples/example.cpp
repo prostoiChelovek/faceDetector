@@ -80,8 +80,14 @@ int main(int argc, char **argv) {
             db.save();
         }
     }
-    FaceInfo e = db.get(0);
-    spdlog::info("Entry: a = {}; b = {}; c = {}", e.a, e.b, e.c);
+
+    auto entryIds = db.getEntriesList();
+    std::cout << "Database has the following entries:" << std::endl;
+    for (auto const &entryId : entryIds) {
+        FaceInfo e = db.get(entryId);
+        std::cout << "\t" << std::flush;
+        spdlog::info("Entry {}: a = {}; b = {}; c = {}", entryId, e.a, e.b, e.c);
+    }
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);

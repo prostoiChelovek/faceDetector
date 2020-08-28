@@ -57,17 +57,11 @@ namespace faces {
     }
 
     _FACES_ADD_ANY_CAST_FOR_NUM(int)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(unsigned int)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(double)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(float)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(short)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(unsigned short)
-
     _FACES_ADD_ANY_CAST_FOR_NUM(std::size_t)
 
 #undef _FACES_TRY_CAST_ANY

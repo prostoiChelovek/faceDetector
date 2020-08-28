@@ -50,7 +50,27 @@ namespace faces {
             return EntryT(entryAttributes);
         }
 
-        std::vector<IdentifierT> getEntriesList() override {}
+        std::vector<IdentifierT> getEntriesList() override {
+            std::vector<IdentifierT> res;
+
+            auto &obj = _data.get<picojson::object>();
+            for (auto const &[key, value] : obj) {
+                if constexpr (!std::is_same_v<picojson::object::key_type, IdentifierT>) {
+                    if constexpr (std::is_arithmetic_v<IdentifierT>) {
+                        std::istringstream iss(key);
+                        IdentifierT id;
+                        iss >> id;
+                        res.emplace_back(id);
+                    } else {
+                        res.emplace_back(static_cast<IdentifierT>(key));
+                    }
+                } else {
+                    res.emplace_back(key);
+                }
+            }
+
+            return res;
+        }
 
         IdentifierT add(EntryT const &entry) override {}
 
