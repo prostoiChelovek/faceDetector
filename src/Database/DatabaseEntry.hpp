@@ -30,6 +30,16 @@ namespace faces {
             return ok;
         }
 
+        [[nodiscard]] std::map<std::string, std::any> getAttributes() const {
+            std::map<std::string, std::any> res;
+
+            for (std::string const &attribute : this->_attributeNames) {
+                res[attribute] = LookableFields<DerivedT>::get(attribute);
+            }
+
+            return res;
+        }
+
         virtual bool load() = 0;
 
     protected:

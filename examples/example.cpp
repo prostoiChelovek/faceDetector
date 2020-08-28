@@ -87,7 +87,12 @@ int main(int argc, char **argv) {
         FaceInfo e = db.get(entryId);
         std::cout << "\t" << std::flush;
         spdlog::info("Entry {}: a = {}; b = {}; c = {}", entryId, e.a, e.b, e.c);
+
+        e.a *= 2;
+        e.b += 1;
+        db.update(entryId, e);
     }
+    db.save();
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);

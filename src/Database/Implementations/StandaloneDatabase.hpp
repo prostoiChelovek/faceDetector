@@ -25,21 +25,7 @@ namespace faces {
         explicit StandaloneDatabase(std::string path) : _path(std::move(path)) {}
 
         EntryT get(IdentifierT id) override {
-            auto &obj = _data.get<picojson::object>();
-
-            std::stringstream ss;
-            ss << id;
-            std::string strId = ss.str();
-
-            if (obj.find(strId) == obj.end()) {
-                throw std::out_of_range("Entry with ID='" + strId + "' does not exist in the database");
-            }
-
-            picojson::value entryJson = obj[strId];
-            if (!entryJson.is<picojson::object>()) {
-                throw std::logic_error("Entry with ID='" + strId + "' has an incorrect format");
-            }
-            auto const &entryObj = entryJson.get<picojson::object>();
+            picojson::object const &entryObj = _getEntryJson(id);
 
             std::map<std::string, std::any> entryAttributes;
             for (auto const &[name, valueJson] : entryObj) {
@@ -74,7 +60,14 @@ namespace faces {
 
         IdentifierT add(EntryT const &entry) override {}
 
-        void update(IdentifierT id, EntryT const &entry) override {}
+        void update(IdentifierT id, EntryT const &entry) override {
+            picojson::object &entryObj = _getEntryJson(id);
+
+            std::map<std::string, std::any> attributes = entry.getAttributes();
+            for (auto const &[key, value] : attributes) {
+                entryObj[key] = _anyToValue(value);
+            }
+        }
 
         bool save() override {
             try {
@@ -85,7 +78,7 @@ namespace faces {
                     _data = picojson::value(picojson::object());
                 }
 
-                file << _data;
+                _data.serialize(std::ostream_iterator<char>(file), true);
             } catch (std::exception &e) {
                 spdlog::error("Cannot save a database to '{}': {}", _path, e.what());
                 return false;
@@ -126,19 +119,47 @@ namespace faces {
         }
 
         static std::any _valueToAny(picojson::value const &value) {
-            std::any res;
-
             if (value.is<bool>()) {
-                res = value.get<bool>();
-            } else if (value.is<double>()) {
-                res = value.get<double>();
-            } else if (value.is<std::string>()) {
-                res = value.get<std::string>();
-            } else if (value.is<picojson::object>()) {
-                res = value.get<picojson::object>();
+                return value.get<bool>();
+            }
+            if (value.is<double>()) {
+                return value.get<double>();
+            }
+            if (value.is<std::string>()) {
+                return value.get<std::string>();
+            }
+            if (value.is<picojson::object>()) {
+                return value.get<picojson::object>();
+            }
+            throw std::bad_cast();
+        }
+
+        static picojson::value _anyToValue(std::any const &value) {
+            if (value.type() == typeid(bool)) {
+                return picojson::value(std::any_cast<bool>(value));
+            }
+            if (value.type() == typeid(std::string)) {
+                return picojson::value(std::any_cast<std::string>(value));
+            }
+            return picojson::value(anyCast<double>(value));
+        }
+
+        picojson::object &_getEntryJson(IdentifierT const &id) {
+            picojson::object &obj = _data.get<picojson::object>();
+
+            std::stringstream ss;
+            ss << id;
+            std::string strId = ss.str();
+
+            if (obj.find(strId) == obj.end()) {
+                throw std::out_of_range("Entry with ID='" + strId + "' does not exist in the database");
             }
 
-            return res;
+            picojson::value &entryJson = obj[strId];
+            if (!entryJson.is<picojson::object>()) {
+                throw std::logic_error("Entry with ID='" + strId + "' has an incorrect format");
+            }
+            return entryJson.get<picojson::object>();
         }
 
     };

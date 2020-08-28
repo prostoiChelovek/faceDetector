@@ -110,7 +110,7 @@ namespace faces {
             _setters::get(name)->set(_derived, value);
         }
 
-        std::any get(std::string const &name) {
+        [[nodiscard]] std::any get(std::string const &name) const {
             if (!_setters::contains(name)) {
                 return std::any();
             }
@@ -121,12 +121,14 @@ namespace faces {
         struct __Tag {
         };
         using _setters = semi::static_map<std::string, AttributeAccessor<DerivedT> *, __Tag>;
+        static std::vector<std::string> _attributeNames;
 
         explicit LookableFields(DerivedT &derived) : _derived(derived) {}
 
         template<typename FieldT>
         int _registerField(std::string const &name, FieldT DerivedT::*field) {
             _setters::get(name) = new AttributeAccessorImpl<DerivedT, FieldT>(name, field);
+            _attributeNames.emplace_back(name);
             return 0;
         }
 
@@ -134,6 +136,9 @@ namespace faces {
         DerivedT &_derived;
 
     };
+
+    template<typename DerivedT>
+    std::vector<std::string> LookableFields<DerivedT>::_attributeNames = {};
 
 }
 
