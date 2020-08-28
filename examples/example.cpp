@@ -48,10 +48,6 @@ public:
             throw std::logic_error("Cannot initialize attributes by the given map");
         }
     }
-
-    bool load() override {
-        return true;
-    }
 };
 
 int main(int argc, char **argv) {
