@@ -1,5 +1,4 @@
 add_subdirectory(utils)
-
 add_subdirectory(Config)
 add_subdirectory(Face)
 add_subdirectory(Detector)
@@ -8,3 +7,4 @@ add_subdirectory(Aligner)
 add_subdirectory(Tracker)
 add_subdirectory(Recognizer)
 add_subdirectory(Database)
+add_subdirectory(Manager)

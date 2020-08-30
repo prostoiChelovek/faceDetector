@@ -10,6 +10,8 @@
 #ifndef FACES_DATABASEENTRY_HPP
 #define FACES_DATABASEENTRY_HPP
 
+#include <spdlog/spdlog.h>
+
 #include <utils/LookableAttributes.hpp>
 
 namespace faces {

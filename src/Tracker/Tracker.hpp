@@ -22,6 +22,8 @@ namespace faces {
      */
     class Tracker {
     public:
+        using TrackedT = std::vector<std::pair<int, int>>;
+
         /**
          * Tracks faces frame-to-frame. @n
          * This is a wrapper around the @ref _track method
@@ -34,9 +36,9 @@ namespace faces {
          * @return a vector of pairs of matching face indexes - {previousIdx, actualIdx};
          *         if a face does not have a match, its pair should be set to '-1'
          */
-        std::vector<std::pair<int, int>> track(std::vector<Face> const &prevFaces,
-                                               std::vector<Face> const &actualFaces,
-                                               cv::Mat const &prevImg, cv::Mat const &actualImg) {
+        TrackedT track(std::vector<Face> const &prevFaces,
+                       std::vector<Face> const &actualFaces,
+                       cv::Mat const &prevImg, cv::Mat const &actualImg) {
             if (!_ok) {
                 return {};
             }
@@ -66,9 +68,9 @@ namespace faces {
          * @return a vector of pairs of matching face indexes - {previousIdx, actualIdx};
          *         if a face does not have a match, its pair should be set to '-1'
          */
-        virtual std::vector<std::pair<int, int>> _track(std::vector<Face> const &prevFaces,
-                                                        std::vector<Face> const &actualFaces,
-                                                        cv::Mat const &prevImg, cv::Mat const &actualImg) = 0;
+        virtual TrackedT _track(std::vector<Face> const &prevFaces,
+                                std::vector<Face> const &actualFaces,
+                                cv::Mat const &prevImg, cv::Mat const &actualImg) = 0;
 
     };
 

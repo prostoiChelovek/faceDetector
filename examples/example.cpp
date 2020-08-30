@@ -21,6 +21,7 @@
 #include <Tracker/Implementations/CentroidTracker.h>
 #include <Database/DatabaseEntry.hpp>
 #include <Database/Implementations/StandaloneDatabase.hpp>
+#include <Manager/Implementations/DefaultManager.h>
 
 namespace faces {
     FACES_AUGMENT_CONFIG(test,
@@ -89,12 +90,6 @@ int main(int argc, char **argv) {
         db.update(entryId, e);
     }
 
-    FaceInfo testE;
-    testE.a = random() % 1024;
-    testE.b = random() % 512;
-    testE.c = std::to_string(testE.a + testE.b);
-    db.add(testE);
-
     db.save();
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
@@ -102,6 +97,7 @@ int main(int argc, char **argv) {
     faces::Aligner *aligner = FACES_CREATE_INSTANCE(Aligner, DlibChip, configInstance);
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
     faces::Tracker *tracker = FACES_CREATE_INSTANCE(Tracker, Centroid, configInstance);
+    faces::Manager *manager = new faces::DefaultManager<decltype(db)>(configInstance, &db);
 
     if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr
         || tracker == nullptr) {
@@ -116,11 +112,13 @@ int main(int argc, char **argv) {
 
     cv::VideoCapture cap(configInstance.getDataPath("testVideo"));
     cv::Mat test, prevTest;
-    std::vector<faces::Face> detected, prevDetected;
-    std::vector<std::pair<int, int>> tracked;
+    faces::Tracker::TrackedT tracked;
 
     while (cap.isOpened()) {
         cap >> test;
+
+        std::vector<faces::Face> &detected = manager->getFaces();
+        std::vector<faces::Face> const &prevDetected = manager->getPreviousFaces();
 
         detected = detector->detect(test);
         landmarker->detect(detected);
@@ -129,6 +127,8 @@ int main(int argc, char **argv) {
         if (!prevTest.empty()) {
             tracked = tracker->track(prevDetected, detected, prevTest, test);
         }
+
+        manager->update(tracked);
 
         for (std::size_t i = 0; i < detected.size(); ++i) {
             faces::Face const &f = detected[i];
@@ -166,7 +166,6 @@ int main(int argc, char **argv) {
             }
         }
 
-        prevDetected = detected;
         prevTest = test;
 
         cv::imshow("test", test);
