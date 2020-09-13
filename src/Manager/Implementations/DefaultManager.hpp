@@ -19,25 +19,50 @@
 
 namespace faces {
 
+    class NewFaceHandlerBase {
+    public:
+        virtual void handle(Face &face) = 0;
+
+    };
+
     template<typename DatabaseT>
-    class DefaultManager : public Manager {
-        static_assert(is_base_template_of<Database, DatabaseT>::value,
+    class NewFaceDatabaseRegistrar : public NewFaceHandlerBase {
+        static_assert(is_base_template_of<Database, std::remove_pointer_t<DatabaseT>>::value,
                       "DatabaseT should be an implementation of the Database");
         static_assert(std::is_convertible_v<Face const &, typename DatabaseT::EntryType>,
                       "DatabaseT's EntryT should be initialisable with Face");
 
     public:
-        inline static int registerFaceAfter = 15;
-
         inline static bool saveDatabase = true;
 
-        explicit DefaultManager(Config const &config, DatabaseT *database)
-                : _database(database),
+        explicit NewFaceDatabaseRegistrar(DatabaseT &database) : _database(database) {}
+
+        void handle(Face &face) override {
+            auto entry = static_cast<typename DatabaseT::EntryType>(face);
+            typename DatabaseT::IdentifierType newId = _database.add(entry);
+            if (saveDatabase) {
+                _database.save();
+            }
+
+            face.label = static_cast<int>(newId);
+        }
+
+    private:
+        DatabaseT _database;
+
+    };
+
+    class DefaultManager : public Manager {
+    public:
+        inline static int handleNewFaceAfter = 15;
+
+        NewFaceHandlerBase *newFaceHandler;
+
+        explicit DefaultManager(Config const &config, NewFaceHandlerBase *newFaceHandler = nullptr)
+                : newFaceHandler(newFaceHandler),
                   _random(std::random_device()()), _randomDistribution(INT_MIN, INT_MIN / 2) {}
 
     protected:
-        DatabaseT *_database;
-
         void _processNewFace(Face &face) override {
             if (face.label == -1) {
                 face.label = _getTempLabel();
@@ -58,10 +83,11 @@ namespace faces {
             }
 
             int &faceFramesCount = _framesCount[actualFace.label];
-            if (actualFace.label < 0 && faceFramesCount > registerFaceAfter) {
+            // execute a handler for the face and stop counting frames for it
+            // if label is unknown, label wasn't determined for handleNewFaceAfter frames and handler was set
+            if (actualFace.label < 0 && faceFramesCount > handleNewFaceAfter && newFaceHandler) {
                 _framesCount.erase(actualFace.label);
-
-                actualFace.label = _addToDb(actualFace);
+                newFaceHandler->handle(actualFace);
             } else {
                 faceFramesCount++;
             }
@@ -75,24 +101,10 @@ namespace faces {
 
         [[nodiscard]] int _getTempLabel();
 
-        int _addToDb(Face const &face);
-
     };
 
-    template<typename DatabaseT>
-    int DefaultManager<DatabaseT>::_getTempLabel() {
+    int DefaultManager::_getTempLabel() {
         return _randomDistribution(_random);
-    }
-
-    template<typename DatabaseT>
-    int DefaultManager<DatabaseT>::_addToDb(Face const &face) {
-        auto entry = static_cast<typename DatabaseT::EntryType>(face);
-        typename DatabaseT::IdentifierType newId = _database->add(entry);
-        if (saveDatabase) {
-            _database->save();
-        }
-
-        return static_cast<int>(newId);
     }
 
 }

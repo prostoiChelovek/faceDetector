@@ -82,12 +82,14 @@ int main(int argc, char **argv) {
         spdlog::info("Entry {}: a = {}", entryId, e.a);
     }
 
+    faces::NewFaceHandlerBase *newFaceHandler = new faces::NewFaceDatabaseRegistrar(db);
+
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
     faces::Aligner *aligner = FACES_CREATE_INSTANCE(Aligner, DlibChip, configInstance);
     faces::Recognizer *recognizer = FACES_CREATE_INSTANCE(Recognizer, DlibResnetSvm, configInstance);
     faces::Tracker *tracker = FACES_CREATE_INSTANCE(Tracker, Centroid, configInstance);
-    faces::Manager *manager = new faces::DefaultManager<decltype(db)>(configInstance, &db);
+    faces::Manager *manager = new faces::DefaultManager(configInstance, newFaceHandler);
 
     if (detector == nullptr || recognizer == nullptr || landmarker == nullptr || aligner == nullptr
         || tracker == nullptr) {
