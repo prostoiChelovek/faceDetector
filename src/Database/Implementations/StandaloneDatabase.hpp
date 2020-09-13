@@ -133,7 +133,11 @@ namespace faces {
     template<typename EntryT, typename IdentifierT>
     IdentifierT StandaloneDatabase<EntryT, IdentifierT>::add(const EntryT &entry) {
         std::vector<IdentifierT> entries = getEntriesList();
-        IdentifierT nextId = *std::max_element(entries.begin(), entries.end()) + 1;
+        IdentifierT nextId = 0;
+        if (!entries.empty()) {
+            const auto lastEntry = std::max_element(entries.begin(), entries.end());
+            nextId = *lastEntry + 1;
+        }
 
         auto &obj = _data.get<picojson::object>();
 

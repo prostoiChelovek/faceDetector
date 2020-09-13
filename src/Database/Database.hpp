@@ -27,6 +27,9 @@ namespace faces {
                       "EntryT of the Database should be a subclass of faces::DatabaseEntry, "
                       "and provide access to its protected constructor");
 
+        using EntryType = EntryT;
+        using IdentifierType = IdentifierT;
+
         /**
          * @param id - identifier of the entry
          *
