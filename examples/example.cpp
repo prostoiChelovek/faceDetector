@@ -21,7 +21,7 @@
 #include <Tracker/Implementations/CentroidTracker.h>
 #include <Database/DatabaseEntry.hpp>
 #include <Database/Implementations/StandaloneDatabase.hpp>
-#include <Manager/Implementations/DefaultManager.h>
+#include <Manager/Implementations/DefaultManager.hpp>
 
 namespace faces {
     FACES_AUGMENT_CONFIG(test,
@@ -34,14 +34,10 @@ public:
     int a = 0;
     FACES_REGISTER_ACCESSOR(FaceInfo, a);
 
-    float b = 0.0;
-    FACES_REGISTER_ACCESSOR(FaceInfo, b);
-
-    std::string c;
-    FACES_REGISTER_ACCESSOR(FaceInfo, c);
-
-    FaceInfo()
-            : faces::DatabaseEntry<FaceInfo>(*this) {}
+    FaceInfo(faces::Face const &face)
+            : faces::DatabaseEntry<FaceInfo>(*this) {
+        a = face.label; // for test
+    }
 
     explicit FaceInfo(std::map<std::string, std::any> const &attributes)
             : faces::DatabaseEntry<FaceInfo>(*this) {
@@ -83,14 +79,8 @@ int main(int argc, char **argv) {
     for (auto const &entryId : entryIds) {
         FaceInfo e = db.get(entryId);
         std::cout << "\t" << std::flush;
-        spdlog::info("Entry {}: a = {}; b = {}; c = {}", entryId, e.a, e.b, e.c);
-
-        e.a *= 2;
-        e.b += 1;
-        db.update(entryId, e);
+        spdlog::info("Entry {}: a = {}", entryId, e.a);
     }
-
-    db.save();
 
     faces::Detector *detector = FACES_CREATE_INSTANCE(Detector, OcvDefaultDnn, configInstance);
     faces::Landmarker *landmarker = FACES_CREATE_INSTANCE(Landmarker, Dlib, configInstance);
@@ -109,6 +99,8 @@ int main(int argc, char **argv) {
         spdlog::error("Cannot load something!");
         return 1;
     }
+
+    faces::Manager::autoUpdatePrevious = false;
 
     cv::VideoCapture cap(configInstance.getDataPath("testVideo"));
     cv::Mat test, prevTest;
@@ -153,8 +145,9 @@ int main(int argc, char **argv) {
             int const &prev = trackedPair.first;
             int const &actual = trackedPair.second;
             if (prev != -1 && actual != -1) {
-                cv::Point prevCenter = (prevDetected[prev].rect.br() + prevDetected[prev].rect.tl()) / 2;
-                cv::Point actualCenter = (detected[actual].rect.br() + detected[actual].rect.tl()) / 2;
+                cv::Point prevCenter =
+                        (prevDetected.at(prev).rect.br() + prevDetected.at(prev).rect.tl()) / 2;
+                cv::Point actualCenter = (detected.at(actual).rect.br() + detected.at(actual).rect.tl()) / 2;
                 cv::line(test, prevCenter, actualCenter, {255, 0, 0}, 2);
             } else {
                 int nonMatchedIdx = std::max(prev, actual);
@@ -167,6 +160,7 @@ int main(int argc, char **argv) {
         }
 
         prevTest = test;
+        manager->updatePrevious();
 
         cv::imshow("test", test);
         cv::waitKey(1);
