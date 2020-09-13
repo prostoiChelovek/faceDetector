@@ -17,12 +17,39 @@ namespace faces {
 
     class Manager {
     public:
+        inline static bool autoUpdatePrevious = true;
+
         Manager() = default;
 
-        virtual void update(std::vector<Face> const &detected, Tracker::TrackedT const &tracked) = 0;
+        void update(std::vector<Face> const &detected, Tracker::TrackedT const &tracked) {
+            _faces = detected;
+            update(tracked);
+        }
 
         void update(Tracker::TrackedT const &tracked) {
-            update(_faces, tracked);
+            for (auto const &[prevIdx, actualIdx] : tracked) {
+                if (prevIdx == -1) { // new face
+                    _processNewFace(_faces.at(actualIdx));
+                } else if (actualIdx == -1) { // face lost
+                    _processLostFace(_previousFaces.at(prevIdx));
+                } else { // face tracked
+                    _processTrackedFace(_previousFaces.at(prevIdx), _faces.at(actualIdx));
+                }
+            }
+
+            if (tracked.empty() && !_faces.empty()) {
+                for (Face &face : _faces) {
+                    _processNewFace(face);
+                }
+            }
+
+            if (autoUpdatePrevious) {
+                updatePrevious();
+            }
+        }
+
+        void updatePrevious() {
+            _previousFaces = _faces;
         }
 
         std::vector<Face> &getFaces() {
@@ -35,6 +62,12 @@ namespace faces {
 
     protected:
         std::vector<Face> _faces, _previousFaces;
+
+        virtual void _processNewFace(Face &face) = 0;
+
+        virtual void _processLostFace(Face &face) = 0;
+
+        virtual void _processTrackedFace(Face &prevFace, Face &actualFace) = 0;
 
     };
 
