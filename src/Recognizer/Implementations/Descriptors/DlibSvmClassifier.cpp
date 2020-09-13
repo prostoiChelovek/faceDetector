@@ -107,17 +107,15 @@ bool faces::DlibSvmClassifier::_save(std::string const &dst) {
 }
 
 bool faces::DlibSvmClassifier::_load(std::string const &classifiersFile) {
+    _ok = true;
     try {
         dlib::deserialize(classifiersFile) >> _classifiers;
-        _ok = true;
         if (_classifiers.empty()) {
-            spdlog::error("Descriptor classifiers were loaded without errors from file {}, "
-                          "however they are empty!", classifiersFile);
-            _ok = false;
+            throw dlib::serialization_error(
+                    "Descriptor classifiers were loaded without errors, however they are empty!");
         }
     } catch (dlib::serialization_error &e) {
         spdlog::error("Cannot load descriptor classifiers from {}: {}", classifiersFile, e.what());
-        _ok = false;
     }
     return _ok;
 }
