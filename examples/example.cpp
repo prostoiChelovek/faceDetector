@@ -21,7 +21,8 @@
 #include <Tracker/Implementations/CentroidTracker.h>
 #include <Database/DatabaseEntry.hpp>
 #include <Database/Implementations/StandaloneDatabase.hpp>
-#include <Manager/Implementations/DefaultManager.hpp>
+#include <Manager/Implementations/DefaultManager.h>
+#include <Manager/Implementations/NewFaceDatabaseRegistrar.hpp>
 
 namespace faces {
     FACES_AUGMENT_CONFIG(test,

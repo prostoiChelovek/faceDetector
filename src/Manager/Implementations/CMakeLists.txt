@@ -1,5 +1,7 @@
 target_sources(faces
         PRIVATE
+        DefaultManager.cpp
         PUBLIC
-        DefaultManager.hpp
+        DefaultManager.h
+        NewFaceDatabaseRegistrar.hpp
         )

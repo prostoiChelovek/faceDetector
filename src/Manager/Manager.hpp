@@ -15,6 +15,12 @@
 
 namespace faces {
 
+    class NewFaceHandlerBase {
+    public:
+        virtual void handle(Face &face) = 0;
+
+    };
+
     class Manager {
     public:
         inline static bool autoUpdatePrevious = true;
